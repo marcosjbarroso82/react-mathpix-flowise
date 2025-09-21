@@ -1,6 +1,7 @@
 import type { Route } from "./+types/settings";
 import CameraSettings from "../components/CameraSettings";
 import MathpixSettings from "../components/MathpixSettings";
+import FlowiseAgentsSettings from "../components/FlowiseAgentsSettings";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -30,8 +31,15 @@ export default function Settings() {
 
       {/* Camera Settings */}
       <div className="px-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
           <CameraSettings showTitle={true} showResetButton={true} />
+        </div>
+      </div>
+
+      {/* Flowise Agents Settings */}
+      <div className="px-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+          <FlowiseAgentsSettings showTitle={true} showResetButton={true} />
         </div>
       </div>
 
