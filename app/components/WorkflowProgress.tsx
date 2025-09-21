@@ -1,6 +1,7 @@
 import React from 'react';
 import type { ImageItem, WorkflowStep } from '../contexts/MultiOCRWorkflowContext';
 import { MultiOCRWorkflowService } from '../services/multiOCRWorkflowService';
+import { useFlowiseAgents } from '../contexts/FlowiseAgentsContext';
 
 interface WorkflowProgressProps {
   images: ImageItem[];
@@ -19,6 +20,7 @@ export default function WorkflowProgress({
   responseAgentsResults,
   isRunning
 }: WorkflowProgressProps) {
+  const { agents } = useFlowiseAgents();
   const getStepIcon = (status: WorkflowStep['status']) => {
     switch (status) {
       case 'pending':
@@ -198,16 +200,26 @@ export default function WorkflowProgress({
             Resultados de Agentes de Respuesta
           </h3>
           <div className="space-y-4">
-            {Object.entries(responseAgentsResults).map(([agentId, result]) => (
-              <div key={agentId} className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
-                <div className="text-sm font-medium text-purple-800 dark:text-purple-200 mb-2">
-                  Agente: {agentId}
+            {Object.entries(responseAgentsResults).map(([agentId, result]) => {
+              const agent = agents.find(a => a.id === agentId);
+              const agentName = agent ? agent.name : `Agente ${agentId}`;
+              
+              return (
+                <div key={agentId} className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+                  <div className="text-sm font-medium text-purple-800 dark:text-purple-200 mb-2">
+                    {agentName}
+                  </div>
+                  {agent && (
+                    <div className="text-xs text-purple-600 dark:text-purple-400 mb-2 truncate">
+                      {agent.url}
+                    </div>
+                  )}
+                  <pre className="text-sm whitespace-pre-wrap overflow-x-auto text-purple-700 dark:text-purple-300">
+                    {MultiOCRWorkflowService.formatAgentResult(result)}
+                  </pre>
                 </div>
-                <pre className="text-sm whitespace-pre-wrap overflow-x-auto text-purple-700 dark:text-purple-300">
-                  {MultiOCRWorkflowService.formatAgentResult(result)}
-                </pre>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
