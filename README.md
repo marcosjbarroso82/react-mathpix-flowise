@@ -1,21 +1,25 @@
-# Mathpix OCR Explorer
+# React Flowise Agents Platform
 
-Un proyecto completo de exploración de la API de OCR de Mathpix para aprender y experimentar con reconocimiento de texto y fórmulas matemáticas. Este proyecto combina la captura de imágenes con `react-webcam` y el procesamiento avanzado con la API de Mathpix.
+Una plataforma base para probar y experimentar con agentes de Flowise AI. Este proyecto combina funcionalidades de captura de imágenes con `react-webcam` y procesamiento OCR con la API de Mathpix, además de proporcionar una base sólida para integrar agentes de Flowise.
 
 ## 🎯 Objetivo
 
-Este proyecto sirve como un laboratorio completo para explorar las capacidades de la API de Mathpix OCR, incluyendo:
-- Reconocimiento de texto con alta precisión
-- Conversión de fórmulas matemáticas a LaTeX y MathML
-- Captura de imágenes con react-webcam
-- Subida de archivos para procesamiento
-- Múltiples formatos de salida (texto, LaTeX, MathML)
-- Interfaz responsive optimizada para móviles
-- Configuración persistente de API y cámara
+Este proyecto sirve como una plataforma completa para:
+- **Probar agentes de Flowise AI** - Interfaz principal para conectar y experimentar con agentes
+- **Funcionalidades de OCR** - Reconocimiento de texto y fórmulas matemáticas con Mathpix
+- **Captura de imágenes** - Usando react-webcam para capturas en tiempo real
+- **Base extensible** - Arquitectura preparada para integrar nuevas funcionalidades de IA
 
 ## 🚀 Características Implementadas
 
-### 🔍 **Página de OCR** (`/`)
+### 🤖 **Página de Flowise Agents** (`/`)
+- **Interfaz principal** para probar agentes de Flowise AI
+- **Configuración de endpoints** de Flowise (próximamente)
+- **Interfaz de chat** con agentes (próximamente)
+- **Análisis de resultados** y métricas (próximamente)
+- **Base sólida** para integración con Flowise
+
+### 🔍 **Página de OCR** (`/ocr`)
 - **Subida de archivos** para procesamiento con Mathpix API
 - **Captura con cámara** integrada usando react-webcam
 - **Procesamiento de imágenes** con reconocimiento de texto y fórmulas
@@ -80,6 +84,7 @@ Este proyecto sirve como un laboratorio completo para explorar las capacidades d
 - **React Router 7** - Enrutamiento
 - **TypeScript** - Tipado estático
 - **TailwindCSS 4** - Estilos y diseño responsive
+- **Flowise AI** - Plataforma de agentes de IA (integración futura)
 - **Mathpix API** - Reconocimiento de texto y fórmulas matemáticas
 - **react-webcam 7.2.0** - Funcionalidad de cámara web
 - **Vite** - Herramienta de construcción
@@ -90,8 +95,9 @@ Este proyecto sirve como un laboratorio completo para explorar las capacidades d
 ### Prerrequisitos
 - Node.js 18+ 
 - Navegador moderno con soporte para WebRTC
-- Cámara web o dispositivo móvil con cámara
-- Cuenta de Mathpix con App ID y App Key
+- Cámara web o dispositivo móvil con cámara (para funcionalidades de OCR)
+- Cuenta de Mathpix con App ID y App Key (opcional, para funcionalidades de OCR)
+- Instancia de Flowise (opcional, para funcionalidades de agentes)
 
 ### Instalación
 ```bash
@@ -144,7 +150,8 @@ app/
 │   ├── CameraSettingsContext.tsx # Contexto global para configuración de cámara
 │   └── ThemeContext.tsx         # Contexto de tema (claro/oscuro)
 ├── routes/
-│   ├── ocr.tsx                  # Página principal de OCR (/)
+│   ├── flowise-agents.tsx       # Página principal de Flowise Agents (/)
+│   ├── ocr.tsx                  # Página de OCR (/ocr)
 │   ├── camera.tsx               # Página de cámara (/camera)
 │   ├── gallery.tsx              # Galería de capturas (/gallery)
 │   ├── settings.tsx             # Configuraciones (/settings)
@@ -155,12 +162,16 @@ app/
 
 ## ⚙️ Configuración
 
-### Configuración de Mathpix API
+### Configuración de Flowise (Próximamente)
+- **Endpoint de Flowise** - URL de tu instancia de Flowise
+- **API Key** - Clave de autenticación para Flowise
+- **Configuración de Agentes** - Selección y configuración de agentes específicos
 
+### Configuración de Mathpix API (Opcional)
 | Parámetro | Descripción | Requerido |
 |-----------|-------------|-----------|
-| `appId` | ID de aplicación de Mathpix | Sí |
-| `appKey` | Clave de aplicación de Mathpix | Sí |
+| `appId` | ID de aplicación de Mathpix | Sí (para OCR) |
+| `appKey` | Clave de aplicación de Mathpix | Sí (para OCR) |
 | `outputFormats` | Formatos de salida deseados | No |
 | `includeMath` | Incluir reconocimiento de fórmulas | No |
 
@@ -199,7 +210,8 @@ Para obtener mejores resultados en captura de pantallas para OCR:
 ## 🎨 Funcionalidades Implementadas
 
 ### ✅ Completadas
-- [x] Página principal de OCR con interfaz dummy
+- [x] Página principal de Flowise Agents con interfaz dummy
+- [x] Página de OCR con funcionalidad completa de Mathpix
 - [x] Captura de fotos con diferentes formatos (JPEG/PNG)
 - [x] Configuración completa de resolución y calidad
 - [x] Información detallada de la cámara y capacidades
@@ -208,20 +220,20 @@ Para obtener mejores resultados en captura de pantallas para OCR:
 - [x] Manejo de errores y permisos de cámara
 - [x] Delay de enfoque configurable
 - [x] Optimización para captura de pantallas (OCR)
-- [x] Documentación actualizada para Mathpix
+- [x] Navegación actualizada con Flowise como página principal
 
 ### 🔄 En Desarrollo
-- [ ] Integración con API de Mathpix
-- [ ] Procesamiento de imágenes con OCR
-- [ ] Mostrar resultados en múltiples formatos
-- [ ] Galería funcional con resultados OCR
+- [ ] Integración con Flowise API
+- [ ] Interfaz de chat con agentes
+- [ ] Configuración de endpoints de Flowise
+- [ ] Análisis de resultados de agentes
 
 ### 📋 Planificadas
-- [ ] Configuración de credenciales de API
-- [ ] Manejo de errores de API
-- [ ] Exportación de resultados
-- [ ] Historial de procesamientos
-- [ ] Búsqueda en texto extraído
+- [ ] Configuración de credenciales de Flowise
+- [ ] Historial de conversaciones con agentes
+- [ ] Métricas de rendimiento de agentes
+- [ ] Exportación de resultados de agentes
+- [ ] Integración avanzada con múltiples agentes
 
 ## 🚀 Despliegue
 
