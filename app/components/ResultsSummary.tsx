@@ -1,6 +1,7 @@
 import React from 'react';
 import { useFlowiseAgents } from '../contexts/FlowiseAgentsContext';
 import { MultiOCRWorkflowService } from '../services/multiOCRWorkflowService';
+import { useUI } from '../contexts/UIContext';
 
 interface ResultsSummaryProps {
   responseAgentsResults: { [agentId: string]: any };
@@ -8,6 +9,7 @@ interface ResultsSummaryProps {
 
 export default function ResultsSummary({ responseAgentsResults }: ResultsSummaryProps) {
   const { agents } = useFlowiseAgents();
+  const { uiSettings } = useUI();
 
   // Función para extraer el campo "lectura" de la respuesta del agente
   const extractReadingField = (agentResult: any): string => {
@@ -71,9 +73,11 @@ export default function ResultsSummary({ responseAgentsResults }: ResultsSummary
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-      <h2 className="text-lg font-medium mb-4" style={{ color: 'var(--color-text-primary)' }}>
-        📋 Resumen de Resultados
-      </h2>
+      {!uiSettings.compactMode && (
+        <h2 className="text-lg font-medium mb-4" style={{ color: 'var(--color-text-primary)' }}>
+          📋 Resumen de Resultados
+        </h2>
+      )}
       
       <div className="space-y-4">
         {Object.entries(responseAgentsResults).map(([agentId, result]) => {

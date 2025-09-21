@@ -1,6 +1,7 @@
 import React, { useRef, useCallback } from 'react';
 import Webcam from 'react-webcam';
 import { useCameraSettings } from '../contexts/CameraSettingsContext';
+import { useUI } from '../contexts/UIContext';
 
 // Función para reproducir sonido de click
 const playClickSound = () => {
@@ -56,6 +57,7 @@ export default function WorkflowShortcuts({
   onReset
 }: WorkflowShortcutsProps) {
   const { settings } = useCameraSettings();
+  const { uiSettings } = useUI();
   const webcamRef = useRef<Webcam>(null);
 
   // Verificar si se puede tomar foto
@@ -125,9 +127,11 @@ export default function WorkflowShortcuts({
         `}
       </style>
       <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
-        <h2 className="text-lg font-medium mb-4" style={{ color: 'var(--color-text-primary)' }}>
-          ⚡ Atajos de Ejecución
-        </h2>
+        {!uiSettings.compactMode && (
+          <h2 className="text-lg font-medium mb-4" style={{ color: 'var(--color-text-primary)' }}>
+            ⚡ Atajos de Ejecución
+          </h2>
+        )}
       
       {/* Primera línea: Tomar Foto y Procesar */}
       <div className="grid grid-cols-2 gap-3 mb-3">
