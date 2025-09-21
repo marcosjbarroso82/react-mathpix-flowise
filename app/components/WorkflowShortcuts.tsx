@@ -107,6 +107,11 @@ export default function WorkflowShortcuts({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
           <span>Procesar y Limpiar</span>
+          {imagesCount > 0 && (
+            <span className="ml-1 px-2 py-0.5 bg-white/20 rounded-full text-xs font-bold">
+              {imagesCount}
+            </span>
+          )}
         </button>
       </div>
 
