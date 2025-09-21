@@ -1,4 +1,5 @@
 import type { Route } from "./+types/about";
+import { PageHeader } from "../components/PageHeader";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -11,13 +12,11 @@ export default function About() {
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: 'var(--color-background)' }}>
       {/* Header */}
-      <div className="shadow-sm border-b px-4 py-4" style={{ 
-        backgroundColor: 'var(--color-surface)', 
-        borderColor: 'var(--color-border)' 
-      }}>
-        <h1 className="text-xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>ℹ️ Acerca de</h1>
-        <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>React Flowise Agents Platform</p>
-      </div>
+      <PageHeader 
+        title="Acerca de" 
+        description="React Flowise Agents Platform"
+        icon="ℹ️"
+      />
 
       {/* Project Info */}
       <div className="p-4">
@@ -239,6 +238,7 @@ export default function About() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }

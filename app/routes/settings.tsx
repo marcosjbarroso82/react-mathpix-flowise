@@ -2,6 +2,7 @@ import type { Route } from "./+types/settings";
 import CameraSettings from "../components/CameraSettings";
 import MathpixSettings from "../components/MathpixSettings";
 import FlowiseAgentsSettings from "../components/FlowiseAgentsSettings";
+import { PageHeader } from "../components/PageHeader";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -14,13 +15,11 @@ export default function Settings() {
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: 'var(--color-background)' }}>
       {/* Header */}
-      <div className="shadow-sm border-b px-4 py-4" style={{ 
-        backgroundColor: 'var(--color-surface)', 
-        borderColor: 'var(--color-border)' 
-      }}>
-        <h1 className="text-xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>⚙️ Configuración</h1>
-        <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>Ajustes de cámara y API de Mathpix</p>
-      </div>
+      <PageHeader 
+        title="Configuración" 
+        description="Ajustes de cámara y API de Mathpix"
+        icon="⚙️"
+      />
 
       {/* Mathpix API Settings */}
       <div className="p-4">

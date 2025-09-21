@@ -5,6 +5,7 @@ import { useMathpixSettings } from '../contexts/MathpixSettingsContext';
 import FileUpload from '../components/FileUpload';
 import CameraOCR from '../components/CameraOCR';
 import OCRResults from '../components/OCRResults';
+import { PageHeader } from '../components/PageHeader';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -82,15 +83,11 @@ export default function OCR() {
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: 'var(--color-background)' }}>
       {/* Header */}
-      <div className="shadow-sm border-b px-4 py-4" style={{ 
-        backgroundColor: 'var(--color-surface)', 
-        borderColor: 'var(--color-border)' 
-      }}>
-        <h1 className="text-xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>🔍 OCR Explorer</h1>
-        <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-          Reconocimiento de texto y fórmulas matemáticas con Mathpix API
-        </p>
-      </div>
+      <PageHeader 
+        title="OCR Explorer" 
+        description="Reconocimiento de texto y fórmulas matemáticas con Mathpix API"
+        icon="🔍"
+      />
 
       {/* Main Content */}
       <div className="p-4">
@@ -165,6 +162,7 @@ export default function OCR() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }

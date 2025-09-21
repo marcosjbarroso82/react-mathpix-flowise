@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router";
+import { useUI } from "../contexts/UIContext";
 
 const navigationItems = [
   {
@@ -52,6 +53,11 @@ const navigationItems = [
 
 export function BottomNavigation() {
   const location = useLocation();
+  const { uiSettings } = useUI();
+
+  if (!uiSettings.showNavigation) {
+    return null;
+  }
 
   return (
     <nav 

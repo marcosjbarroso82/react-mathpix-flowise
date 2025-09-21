@@ -8,14 +8,14 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
-import { BottomNavigation } from "./components/BottomNavigation";
-import { PWAUpdater } from "./components/PWAUpdater";
+import { AppLayout } from "./components/AppLayout";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { CameraSettingsProvider } from "./contexts/CameraSettingsContext";
 import { MathpixSettingsProvider } from "./contexts/MathpixSettingsContext";
 import { FlowiseAgentsProvider } from "./contexts/FlowiseAgentsContext";
 import { PromptsProvider } from "./contexts/PromptsContext";
 import { MultiOCRWorkflowProvider } from "./contexts/MultiOCRWorkflowContext";
+import { UIProvider } from "./contexts/UIContext";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [
@@ -72,21 +72,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <ThemeProvider>
-      <CameraSettingsProvider>
-        <MathpixSettingsProvider>
-          <FlowiseAgentsProvider>
-            <PromptsProvider>
-              <MultiOCRWorkflowProvider>
-                <div className="min-h-screen main-content" style={{ backgroundColor: 'var(--color-background)' }}>
-                  <Outlet />
-                  <BottomNavigation />
-                  <PWAUpdater />
-                </div>
-              </MultiOCRWorkflowProvider>
-            </PromptsProvider>
-          </FlowiseAgentsProvider>
-        </MathpixSettingsProvider>
-      </CameraSettingsProvider>
+      <UIProvider>
+        <CameraSettingsProvider>
+          <MathpixSettingsProvider>
+            <FlowiseAgentsProvider>
+              <PromptsProvider>
+                <MultiOCRWorkflowProvider>
+                  <AppLayout />
+                </MultiOCRWorkflowProvider>
+              </PromptsProvider>
+            </FlowiseAgentsProvider>
+          </MathpixSettingsProvider>
+        </CameraSettingsProvider>
+      </UIProvider>
     </ThemeProvider>
   );
 }

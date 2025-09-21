@@ -10,6 +10,7 @@ import AgentSelector from '../components/AgentSelector';
 import WorkflowProgress from '../components/WorkflowProgress';
 import WorkflowShortcuts from '../components/WorkflowShortcuts';
 import ResultsSummary from '../components/ResultsSummary';
+import { PageHeader } from '../components/PageHeader';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -214,17 +215,11 @@ export default function MultiOCRWorkflow() {
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: 'var(--color-background)' }}>
       {/* Header */}
-      <div className="shadow-sm border-b px-4 py-4" style={{ 
-        backgroundColor: 'var(--color-surface)', 
-        borderColor: 'var(--color-border)' 
-      }}>
-        <h1 className="text-xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-          ⚡ Multi-OCR Workflow
-        </h1>
-        <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-          Procesamiento avanzado con múltiples imágenes OCR y agentes de IA
-        </p>
-      </div>
+      <PageHeader 
+        title="Multi-OCR Workflow" 
+        description="Procesamiento avanzado con múltiples imágenes OCR y agentes de IA"
+        icon="⚡"
+      />
 
       {/* Main Content */}
       <div className="p-4 space-y-6">
@@ -469,6 +464,7 @@ export default function MultiOCRWorkflow() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }

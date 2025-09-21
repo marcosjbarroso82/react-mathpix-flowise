@@ -1,6 +1,7 @@
 import type { Route } from "./+types/prompts";
 import { useState } from "react";
 import { usePrompts, type Prompt } from "../contexts/PromptsContext";
+import { PageHeader } from "../components/PageHeader";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -66,15 +67,11 @@ export default function Prompts() {
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: 'var(--color-background)' }}>
       {/* Header */}
-      <div className="shadow-sm border-b px-4 py-4" style={{ 
-        backgroundColor: 'var(--color-surface)', 
-        borderColor: 'var(--color-border)' 
-      }}>
-        <h1 className="text-xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>📝 Prompts</h1>
-        <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-          Gestiona tus prompts reutilizables para agentes de IA
-        </p>
-      </div>
+      <PageHeader 
+        title="Prompts" 
+        description="Gestiona tus prompts reutilizables para agentes de IA"
+        icon="📝"
+      />
 
       {/* Main Content */}
       <div className="p-4">
@@ -250,6 +247,7 @@ export default function Prompts() {
           )}
         </div>
       </div>
+
     </div>
   );
 }

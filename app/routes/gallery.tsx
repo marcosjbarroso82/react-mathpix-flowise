@@ -1,4 +1,5 @@
 import type { Route } from "./+types/gallery";
+import { PageHeader } from "../components/PageHeader";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -11,13 +12,11 @@ export default function Gallery() {
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: 'var(--color-background)' }}>
       {/* Header */}
-      <div className="shadow-sm border-b px-4 py-4" style={{ 
-        backgroundColor: 'var(--color-surface)', 
-        borderColor: 'var(--color-border)' 
-      }}>
-        <h1 className="text-xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>🖼️ Galería</h1>
-        <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>Fotos y videos capturados</p>
-      </div>
+      <PageHeader 
+        title="Galería" 
+        description="Fotos y videos capturados"
+        icon="🖼️"
+      />
 
       {/* Gallery Grid */}
       <div className="p-4">
@@ -84,6 +83,7 @@ export default function Gallery() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }
