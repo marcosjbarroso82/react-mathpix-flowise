@@ -97,7 +97,7 @@ Este proyecto sirve como un laboratorio completo para explorar las capacidades d
 ```bash
 # Clonar el repositorio
 git clone <repository-url>
-cd react-webcam-mathpix-ocr-explorer
+cd react-mathpix-flowise
 
 # Instalar dependencias
 npm install
@@ -236,8 +236,8 @@ npm run deploy
 Incluye `Dockerfile` para despliegue en contenedores:
 
 ```bash
-docker build -t react-webcam-mathpix-ocr-explorer .
-docker run -p 3000:3000 react-webcam-mathpix-ocr-explorer
+docker build -t react-mathpix-flowise .
+docker run -p 3000:3000 react-mathpix-flowise
 ```
 
 ## 🔧 Desarrollo
