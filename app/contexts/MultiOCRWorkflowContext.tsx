@@ -65,6 +65,13 @@ interface MultiOCRWorkflowContextType {
   responseAgentsResults: { [agentId: string]: any };
   setResponseAgentResult: (agentId: string, result: any) => void;
   clearResults: () => void;
+  
+  // Workflow control
+  isRunning: boolean;
+  setIsRunning: (running: boolean) => void;
+  cancelWorkflow: () => void;
+  resetImages: () => void;
+  resetAll: () => void;
 }
 
 const MultiOCRWorkflowContext = createContext<MultiOCRWorkflowContextType | undefined>(undefined);
@@ -80,6 +87,7 @@ export function MultiOCRWorkflowProvider({ children }: MultiOCRWorkflowProviderP
   // Workflow state
   const [images, setImages] = useState<ImageItem[]>([]);
   const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
+  const [isRunning, setIsRunning] = useState<boolean>(false);
   
   // Results
   const [compiledOCRText, setCompiledOCRText] = useState<string>('');
@@ -197,12 +205,6 @@ export function MultiOCRWorkflowProvider({ children }: MultiOCRWorkflowProviderP
     ));
   };
 
-  const resetWorkflow = () => {
-    setWorkflowSteps([]);
-    clearImages();
-    clearResults();
-  };
-
   const setResponseAgentResult = (agentId: string, result: any) => {
     setResponseAgentsResults(prev => ({
       ...prev,
@@ -214,6 +216,34 @@ export function MultiOCRWorkflowProvider({ children }: MultiOCRWorkflowProviderP
     setCompiledOCRText('');
     setQuestionCompilerResult(null);
     setResponseAgentsResults({});
+  };
+
+  // Función para cancelar workflow en ejecución (mantiene resultados)
+  const cancelWorkflow = () => {
+    setIsRunning(false);
+    // Solo marcar pasos en progreso como cancelados, mantener los completados
+    setWorkflowSteps(prev => prev.map(step => 
+      step.status === 'processing' 
+        ? { ...step, status: 'error', error: 'Cancelado por el usuario' }
+        : step
+    ));
+  };
+
+  // Función para resetear solo las imágenes (mantiene resultados y pasos)
+  const resetImages = () => {
+    clearImages();
+  };
+
+  // Función para resetear todo (solo para casos especiales)
+  const resetAll = () => {
+    setWorkflowSteps([]);
+    clearImages();
+    clearResults();
+  };
+
+  // Función legacy para compatibilidad (ahora llama a resetImages)
+  const resetWorkflow = () => {
+    resetImages();
   };
 
   const value: MultiOCRWorkflowContextType = {
@@ -243,7 +273,14 @@ export function MultiOCRWorkflowProvider({ children }: MultiOCRWorkflowProviderP
     setQuestionCompilerResult,
     responseAgentsResults,
     setResponseAgentResult,
-    clearResults
+    clearResults,
+    
+    // Workflow control
+    isRunning,
+    setIsRunning,
+    cancelWorkflow,
+    resetImages,
+    resetAll
   };
 
   return (

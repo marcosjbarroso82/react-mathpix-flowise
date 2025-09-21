@@ -8,6 +8,7 @@ import MultiFileUpload from '../components/MultiFileUpload';
 import MultiCameraCapture from '../components/MultiCameraCapture';
 import AgentSelector from '../components/AgentSelector';
 import WorkflowProgress from '../components/WorkflowProgress';
+import WorkflowShortcuts from '../components/WorkflowShortcuts';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -36,13 +37,17 @@ export default function MultiOCRWorkflow() {
     setQuestionCompilerResult,
     responseAgentsResults,
     setResponseAgentResult,
-    clearResults
+    clearResults,
+    isRunning,
+    setIsRunning,
+    cancelWorkflow,
+    resetImages,
+    resetAll
   } = useMultiOCRWorkflow();
 
   const { agents } = useFlowiseAgents();
   const { settings: mathpixSettings } = useMathpixSettings();
 
-  const [isRunning, setIsRunning] = useState(false);
   const [hasConfigurationErrors, setHasConfigurationErrors] = useState(false);
 
   // Configuration handlers
@@ -183,10 +188,22 @@ export default function MultiOCRWorkflow() {
     setResponseAgentResult
   ]);
 
+  // Función para el atajo "Procesar y Limpiar"
+  const runWorkflowAndClean = useCallback(async () => {
+    await runWorkflow();
+    // Limpiar automáticamente al terminar (solo imágenes, mantener resultados)
+    setTimeout(() => {
+      resetImages();
+    }, 2000); // Esperar 2 segundos para que el usuario vea los resultados
+  }, [runWorkflow, resetImages]);
+
   const handleReset = () => {
-    if (window.confirm('¿Estás seguro de que quieres reiniciar el workflow? Se perderán todos los resultados.')) {
-      resetWorkflow();
-      setIsRunning(false);
+    if (isRunning) {
+      // Si está ejecutándose, cancelar (mantiene resultados)
+      cancelWorkflow();
+    } else {
+      // Si no está ejecutándose, resetear solo imágenes (mantiene resultados)
+      resetImages();
     }
   };
 
@@ -210,6 +227,17 @@ export default function MultiOCRWorkflow() {
 
       {/* Main Content */}
       <div className="p-4 space-y-6">
+        {/* Shortcuts Section */}
+        <WorkflowShortcuts
+          imagesCount={images.length}
+          maxImages={config.maxImages}
+          isRunning={isRunning}
+          canRunWorkflow={canRunWorkflow}
+          onTakePhoto={(file) => addImages([file])}
+          onRunWorkflow={runWorkflowAndClean}
+          onReset={handleReset}
+        />
+
         {/* Configuration Section */}
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-medium mb-4" style={{ color: 'var(--color-text-primary)' }}>
@@ -264,8 +292,21 @@ export default function MultiOCRWorkflow() {
               )}
             </div>
             
-            <div className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-              Máximo {config.maxImages} imágenes
+            <div className="flex items-center space-x-3">
+              <div className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                Máximo {config.maxImages} imágenes
+              </div>
+              <button
+                onClick={() => {
+                  if (window.confirm('¿Estás seguro de que quieres borrar TODOS los resultados y empezar desde cero?')) {
+                    resetAll();
+                  }
+                }}
+                className="text-xs px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded transition-colors duration-200"
+                disabled={isRunning}
+              >
+                Borrar Todo
+              </button>
             </div>
           </div>
         </div>
