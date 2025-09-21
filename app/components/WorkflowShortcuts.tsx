@@ -2,6 +2,37 @@ import React, { useRef, useCallback } from 'react';
 import Webcam from 'react-webcam';
 import { useCameraSettings } from '../contexts/CameraSettingsContext';
 
+// Función para reproducir sonido de click
+const playClickSound = () => {
+  try {
+    // Crear un contexto de audio
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Crear un oscilador para generar un tono
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    // Conectar los nodos
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    // Configurar el sonido (tono corto y agudo)
+    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+    oscillator.type = 'sine';
+    
+    // Configurar el volumen (fade in/out)
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.01);
+    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.1);
+    
+    // Reproducir el sonido
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.1);
+  } catch (error) {
+    console.log('No se pudo reproducir el sonido:', error);
+  }
+};
+
 interface WorkflowShortcutsProps {
   // Estado del workflow
   imagesCount: number;
@@ -34,6 +65,9 @@ export default function WorkflowShortcuts({
   const handleAutoCapture = useCallback(async () => {
     if (!canTakePhoto || !webcamRef.current) return;
 
+    // Reproducir sonido de click
+    playClickSound();
+
     try {
       // Aplicar delay de enfoque
       await new Promise(resolve => setTimeout(resolve, settings.focusDelay * 1000));
@@ -64,15 +98,36 @@ export default function WorkflowShortcuts({
   // Función para ejecutar workflow completo y limpiar
   const handleRunAndClean = useCallback(() => {
     if (canRunWorkflow) {
+      // Reproducir sonido de click
+      playClickSound();
       onRunWorkflow();
     }
   }, [canRunWorkflow, onRunWorkflow]);
 
+  // Función para reiniciar con sonido
+  const handleReset = useCallback(() => {
+    // Reproducir sonido de click
+    playClickSound();
+    onReset();
+  }, [onReset]);
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
-      <h2 className="text-lg font-medium mb-4" style={{ color: 'var(--color-text-primary)' }}>
-        ⚡ Atajos de Ejecución
-      </h2>
+    <>
+      <style>
+        {`
+          @keyframes fastBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+          }
+          .hover-fast-blink:hover {
+            animation: fastBlink 0.3s infinite;
+          }
+        `}
+      </style>
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+        <h2 className="text-lg font-medium mb-4" style={{ color: 'var(--color-text-primary)' }}>
+          ⚡ Atajos de Ejecución
+        </h2>
       
       {/* Primera línea: Tomar Foto y Procesar */}
       <div className="grid grid-cols-2 gap-3 mb-3">
@@ -80,7 +135,7 @@ export default function WorkflowShortcuts({
         <button
           onClick={handleAutoCapture}
           disabled={!canTakePhoto}
-          className={`px-4 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2 ${
+          className={`px-4 py-6 rounded-lg font-medium transition-all duration-100 flex items-center justify-center space-x-2 hover-fast-blink ${
             !canTakePhoto
               ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
               : 'bg-green-600 hover:bg-green-700 text-white'
@@ -97,7 +152,7 @@ export default function WorkflowShortcuts({
         <button
           onClick={handleRunAndClean}
           disabled={!canRunWorkflow}
-          className={`px-4 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2 ${
+          className={`px-4 py-6 rounded-lg font-medium transition-all duration-100 flex items-center justify-center space-x-2 hover-fast-blink ${
             !canRunWorkflow
               ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
               : 'bg-blue-600 hover:bg-blue-700 text-white'
@@ -117,8 +172,8 @@ export default function WorkflowShortcuts({
 
       {/* Segunda línea: Reiniciar */}
       <button
-        onClick={onReset}
-        className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
+        onClick={handleReset}
+        className="w-full px-4 py-6 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-all duration-100 flex items-center justify-center space-x-2 hover-fast-blink"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -150,5 +205,6 @@ export default function WorkflowShortcuts({
         />
       </div>
     </div>
+    </>
   );
 }
