@@ -5,6 +5,7 @@ import { useFlowiseAgents } from '../contexts/FlowiseAgentsContext';
 import { useMathpixSettings } from '../contexts/MathpixSettingsContext';
 import { MultiOCRWorkflowService } from '../services/multiOCRWorkflowService';
 import MultiFileUpload from '../components/MultiFileUpload';
+import MultiCameraCapture from '../components/MultiCameraCapture';
 import AgentSelector from '../components/AgentSelector';
 import WorkflowProgress from '../components/WorkflowProgress';
 
@@ -278,6 +279,15 @@ export default function MultiOCRWorkflow() {
           disabled={isRunning}
         />
 
+        {/* Camera Capture Section */}
+        <MultiCameraCapture
+          onImagesCapture={addImages}
+          maxFiles={config.maxImages}
+          currentFileCount={images.length}
+          isProcessing={isRunning}
+          disabled={isRunning}
+        />
+
         {/* Images Management */}
         {images.length > 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
@@ -371,27 +381,45 @@ export default function MultiOCRWorkflow() {
             <div className="flex items-start space-x-2">
               <span className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-xs font-bold text-blue-800 dark:text-blue-200">1</span>
               <div>
-                <strong>Procesamiento OCR:</strong> Las imágenes se procesan en paralelo con Mathpix OCR para extraer texto y fórmulas.
+                <strong>Captura de Imágenes:</strong> Sube archivos desde tu dispositivo o captura fotos con la cámara (hasta {config.maxImages} imágenes).
               </div>
             </div>
             <div className="flex items-start space-x-2">
               <span className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-xs font-bold text-blue-800 dark:text-blue-200">2</span>
               <div>
-                <strong>Compilación:</strong> Los resultados OCR se compaginan en un texto estructurado con formato "OCR #1 {'{'}texto{'}'} FIN OCR #1".
+                <strong>Procesamiento OCR:</strong> Las imágenes se procesan en paralelo con Mathpix OCR para extraer texto y fórmulas.
               </div>
             </div>
             <div className="flex items-start space-x-2">
               <span className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-xs font-bold text-blue-800 dark:text-blue-200">3</span>
               <div>
-                <strong>Agente Compilador:</strong> El texto compilado se envía al agente compilador que genera una pregunta o consulta procesada.
+                <strong>Compilación:</strong> Los resultados OCR se compilan en un texto estructurado con formato "OCR #1 {'{'}texto{'}'} FIN OCR #1".
               </div>
             </div>
             <div className="flex items-start space-x-2">
               <span className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-xs font-bold text-blue-800 dark:text-blue-200">4</span>
               <div>
+                <strong>Agente Compilador:</strong> El texto compilado se envía al agente compilador que genera una pregunta o consulta procesada.
+              </div>
+            </div>
+            <div className="flex items-start space-x-2">
+              <span className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-xs font-bold text-blue-800 dark:text-blue-200">5</span>
+              <div>
                 <strong>Agentes de Respuesta:</strong> La respuesta del compilador se envía en paralelo a múltiples agentes especializados.
               </div>
             </div>
+          </div>
+          
+          <div className="mt-4 p-3 bg-blue-100 dark:bg-blue-800/30 rounded-lg">
+            <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+              💡 Consejos para mejores resultados:
+            </h4>
+            <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+              <li>• Usa la cámara para capturar pantallas de notebook con tu celular</li>
+              <li>• Configura la resolución y delay de enfoque en Configuración</li>
+              <li>• Asegúrate de que el texto sea legible y esté bien iluminado</li>
+              <li>• Puedes combinar archivos subidos con fotos capturadas</li>
+            </ul>
           </div>
         </div>
       </div>
