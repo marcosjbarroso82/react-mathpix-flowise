@@ -1,6 +1,7 @@
 import type { Route } from "./+types/flowise-agents";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFlowiseAgents, type FlowiseAgent } from "../contexts/FlowiseAgentsContext";
+import { usePrompts, type Prompt } from "../contexts/PromptsContext";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -11,11 +12,22 @@ export function meta({}: Route.MetaArgs) {
 
 export default function FlowiseAgents() {
   const { agents, isLoading } = useFlowiseAgents();
+  const { prompts } = usePrompts();
   const [selectedAgent, setSelectedAgent] = useState<string>('');
+  const [selectedPrompt, setSelectedPrompt] = useState<string>('');
   const [question, setQuestion] = useState('');
   const [isLoadingResponse, setIsLoadingResponse] = useState(false);
   const [response, setResponse] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Cargar prompt desde URL params
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const promptParam = urlParams.get('prompt');
+    if (promptParam) {
+      setQuestion(promptParam);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +68,19 @@ export default function FlowiseAgents() {
     setError(null);
   };
 
+  const handlePromptSelect = (promptId: string) => {
+    const prompt = prompts.find(p => p.id === promptId);
+    if (prompt) {
+      setQuestion(prompt.content);
+      setSelectedPrompt(promptId);
+    }
+  };
+
+  const handleCustomQuestion = () => {
+    setSelectedPrompt('');
+    setQuestion('');
+  };
+
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: 'var(--color-background)' }}>
       {/* Header */}
@@ -89,12 +114,22 @@ export default function FlowiseAgents() {
             <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
               Ve a Configuración para agregar tu primer agente de Flowise
             </p>
-            <button 
-              onClick={() => window.location.href = '/settings'}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors duration-200"
-            >
-              Ir a Configuración
-            </button>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <button 
+                onClick={() => window.location.href = '/settings'}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors duration-200"
+              >
+                Ir a Configuración
+              </button>
+              {prompts.length > 0 && (
+                <button 
+                  onClick={() => window.location.href = '/prompts'}
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors duration-200"
+                >
+                  Gestionar Prompts
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           /* Chat Interface */
@@ -117,6 +152,47 @@ export default function FlowiseAgents() {
                 ))}
               </select>
             </div>
+
+            {/* Prompt Selection */}
+            {selectedAgent && prompts.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                    Seleccionar Prompt
+                  </label>
+                  <button
+                    onClick={() => window.location.href = '/prompts'}
+                    className="text-xs text-blue-600 hover:text-blue-700 underline"
+                  >
+                    Gestionar Prompts
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  <select
+                    value={selectedPrompt}
+                    onChange={(e) => handlePromptSelect(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="">Selecciona un prompt...</option>
+                    {prompts.map((prompt) => (
+                      <option key={prompt.id} value={prompt.id}>
+                        {prompt.name}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedPrompt && (
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={handleCustomQuestion}
+                        className="text-xs text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 underline"
+                      >
+                        Escribir pregunta personalizada
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Chat Form */}
             {selectedAgent && (

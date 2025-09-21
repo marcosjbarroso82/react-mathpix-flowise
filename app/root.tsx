@@ -13,6 +13,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { CameraSettingsProvider } from "./contexts/CameraSettingsContext";
 import { MathpixSettingsProvider } from "./contexts/MathpixSettingsContext";
 import { FlowiseAgentsProvider } from "./contexts/FlowiseAgentsContext";
+import { PromptsProvider } from "./contexts/PromptsContext";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [
@@ -52,10 +53,12 @@ export default function App() {
       <CameraSettingsProvider>
         <MathpixSettingsProvider>
           <FlowiseAgentsProvider>
-            <div className="min-h-screen" style={{ backgroundColor: 'var(--color-background)' }}>
-              <Outlet />
-              <BottomNavigation />
-            </div>
+            <PromptsProvider>
+              <div className="min-h-screen" style={{ backgroundColor: 'var(--color-background)' }}>
+                <Outlet />
+                <BottomNavigation />
+              </div>
+            </PromptsProvider>
           </FlowiseAgentsProvider>
         </MathpixSettingsProvider>
       </CameraSettingsProvider>
