@@ -1,0 +1,55 @@
+{
+  "name": "MathPix Flowise OCR",
+  "short_name": "MathPix OCR",
+  "description": "Aplicación de OCR matemático con MathPix y Flowise para reconocimiento de texto e imágenes",
+  "start_url": "/react-mathpix-flowise/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "any",
+  "scope": "/react-mathpix-flowise/",
+  "lang": "es",
+  "categories": ["productivity", "education", "utilities"],
+  "icons": [
+    {
+      "src": "icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Cámara OCR",
+      "short_name": "Cámara",
+      "description": "Abrir cámara para OCR",
+      "url": "/react-mathpix-flowise/camera",
+      "icons": [{ "src": "icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Galería",
+      "short_name": "Galería",
+      "description": "Ver resultados guardados",
+      "url": "/react-mathpix-flowise/gallery",
+      "icons": [{ "src": "icon-96x96.png", "sizes": "96x96" }]
+    }
+  ]
+}

@@ -55,7 +55,7 @@ export function BottomNavigation() {
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 px-4 py-2 z-50 border-t"
+      className="bottom-navigation fixed bottom-0 left-0 right-0 px-4 py-2 z-50 border-t"
       style={{ 
         backgroundColor: 'var(--color-surface)', 
         borderColor: 'var(--color-border)' 

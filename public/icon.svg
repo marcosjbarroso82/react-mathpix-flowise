@@ -1,0 +1,18 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fondo circular -->
+  <circle cx="256" cy="256" r="256" fill="#3b82f6"/>
+  
+  <!-- Símbolo de cámara -->
+  <rect x="160" y="180" width="192" height="144" rx="20" fill="white" stroke="#1e40af" stroke-width="8"/>
+  
+  <!-- Lente de la cámara -->
+  <circle cx="256" cy="252" r="48" fill="#1e40af"/>
+  <circle cx="256" cy="252" r="32" fill="white"/>
+  <circle cx="256" cy="252" r="16" fill="#1e40af"/>
+  
+  <!-- Flash -->
+  <rect x="200" y="160" width="24" height="16" rx="4" fill="white"/>
+  
+  <!-- Texto "OCR" -->
+  <text x="256" y="380" font-family="Arial, sans-serif" font-size="48" font-weight="bold" text-anchor="middle" fill="white">OCR</text>
+</svg>

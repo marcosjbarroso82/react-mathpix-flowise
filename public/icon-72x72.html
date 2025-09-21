@@ -1,0 +1,88 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { margin: 0; padding: 0; }
+    .icon {
+      width: 72px;
+      height: 72px;
+      background: #3b82f6;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .camera {
+      width: 43.199999999999996px;
+      height: 32.4px;
+      background: white;
+      border-radius: 12px;
+      position: relative;
+    }
+    .lens {
+      width: 14.4px;
+      height: 14.4px;
+      background: #1e40af;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .lens-inner {
+      width: 9.36px;
+      height: 9.36px;
+      background: white;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .lens-center {
+      width: 4.68px;
+      height: 4.68px;
+      background: #1e40af;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .flash {
+      width: 8.64px;
+      height: 5.76px;
+      background: white;
+      border-radius: 4px;
+      position: absolute;
+      top: 7.2px;
+      left: 14.4px;
+    }
+    .text {
+      position: absolute;
+      bottom: 10.799999999999999px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      font-family: Arial, sans-serif;
+      font-size: 8.64px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="icon">
+    <div class="camera">
+      <div class="flash"></div>
+      <div class="lens">
+        <div class="lens-inner">
+          <div class="lens-center"></div>
+        </div>
+      </div>
+    </div>
+    <div class="text">OCR</div>
+  </div>
+</body>
+</html>
