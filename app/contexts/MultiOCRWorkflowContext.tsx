@@ -5,6 +5,7 @@ export interface MultiOCRWorkflowConfig {
   questionCompilerAgentId: string;
   responseAgentIds: string[];
   maxImages: number;
+  enableTTS: boolean;
 }
 
 export interface ImageItem {
@@ -35,6 +36,7 @@ export const DEFAULT_MULTI_OCR_WORKFLOW_CONFIG: MultiOCRWorkflowConfig = {
   questionCompilerAgentId: '',
   responseAgentIds: [],
   maxImages: 3,
+  enableTTS: false,
 };
 
 interface MultiOCRWorkflowContextType {

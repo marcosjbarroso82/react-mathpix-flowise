@@ -4,6 +4,7 @@ import { useMultiOCRWorkflow } from '../contexts/MultiOCRWorkflowContext';
 import { useFlowiseAgents } from '../contexts/FlowiseAgentsContext';
 import { useMathpixSettings } from '../contexts/MathpixSettingsContext';
 import { MultiOCRWorkflowService } from '../services/multiOCRWorkflowService';
+import { useTTS } from '../hooks/useTTS';
 import MultiFileUpload from '../components/MultiFileUpload';
 import MultiCameraCapture from '../components/MultiCameraCapture';
 import AgentSelector from '../components/AgentSelector';
@@ -50,6 +51,21 @@ export default function MultiOCRWorkflow() {
   const { agents } = useFlowiseAgents();
   const { settings: mathpixSettings } = useMathpixSettings();
 
+  // TTS Hook
+  const {
+    speakAgentResult,
+    stopTTS,
+    pauseTTS,
+    resumeTTS,
+    clearTTSQueue,
+    getTTSStatus
+  } = useTTS({
+    enabled: config.enableTTS,
+    responseAgentsResults,
+    agents,
+    isRunning
+  });
+
   const [hasConfigurationErrors, setHasConfigurationErrors] = useState(false);
 
   // Configuration handlers
@@ -61,6 +77,12 @@ export default function MultiOCRWorkflow() {
 
   const handleResponseAgentsChange = (agentIds: string[]) => {
     const newConfig = { ...config, responseAgentIds: agentIds };
+    updateConfig(newConfig);
+    saveConfig(newConfig);
+  };
+
+  const handleTTSChange = (enabled: boolean) => {
+    const newConfig = { ...config, enableTTS: enabled };
     updateConfig(newConfig);
     saveConfig(newConfig);
   };
@@ -268,6 +290,50 @@ export default function MultiOCRWorkflow() {
             />
           </div>
 
+          {/* TTS Configuration */}
+          <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <h3 className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                  Text-to-Speech (TTS)
+                </h3>
+                <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+                  Leer automáticamente las respuestas de los agentes cuando terminen de procesar
+                </p>
+              </div>
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={config.enableTTS}
+                  onChange={(e) => handleTTSChange(e.target.checked)}
+                  disabled={isRunning}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                />
+                <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                  Habilitar TTS
+                </span>
+              </label>
+            </div>
+            {config.enableTTS && (
+              <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                <div className="flex items-start space-x-2">
+                  <svg className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="text-xs text-blue-700 dark:text-blue-300">
+                    <p className="font-medium mb-1">💡 Información sobre TTS:</p>
+                    <ul className="space-y-1 text-xs">
+                      <li>• Las respuestas se leerán automáticamente cuando cada agente termine</li>
+                      <li>• Las lecturas se ejecutan en secuencia (una después de la otra)</li>
+                      <li>• Se detecta automáticamente el idioma español si está disponible</li>
+                      <li>• Puedes pausar/reanudar desde los controles de TTS</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Configuration Status */}
           <div className="mt-4 flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -411,6 +477,13 @@ export default function MultiOCRWorkflow() {
           questionCompilerResult={questionCompilerResult}
           responseAgentsResults={responseAgentsResults}
           isRunning={isRunning}
+          enableTTS={config.enableTTS}
+          onSpeakAgentResult={speakAgentResult}
+          onStopTTS={stopTTS}
+          onPauseTTS={pauseTTS}
+          onResumeTTS={resumeTTS}
+          onClearTTSQueue={clearTTSQueue}
+          getTTSStatus={getTTSStatus}
         />
 
         {/* Help Information */}
