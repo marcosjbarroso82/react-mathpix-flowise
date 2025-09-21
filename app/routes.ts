@@ -6,6 +6,7 @@ export default [
   route("ocr", "routes/ocr.tsx"),
   route("camera", "routes/camera.tsx"),
   route("gallery", "routes/gallery.tsx"),
+  route("multi-ocr-workflow", "routes/multi-ocr-workflow.tsx"),
   route("settings", "routes/settings.tsx"),
   route("about", "routes/about.tsx"),
 ] satisfies RouteConfig;

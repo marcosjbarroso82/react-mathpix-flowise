@@ -14,6 +14,7 @@ import { CameraSettingsProvider } from "./contexts/CameraSettingsContext";
 import { MathpixSettingsProvider } from "./contexts/MathpixSettingsContext";
 import { FlowiseAgentsProvider } from "./contexts/FlowiseAgentsContext";
 import { PromptsProvider } from "./contexts/PromptsContext";
+import { MultiOCRWorkflowProvider } from "./contexts/MultiOCRWorkflowContext";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [
@@ -54,10 +55,12 @@ export default function App() {
         <MathpixSettingsProvider>
           <FlowiseAgentsProvider>
             <PromptsProvider>
-              <div className="min-h-screen" style={{ backgroundColor: 'var(--color-background)' }}>
-                <Outlet />
-                <BottomNavigation />
-              </div>
+              <MultiOCRWorkflowProvider>
+                <div className="min-h-screen" style={{ backgroundColor: 'var(--color-background)' }}>
+                  <Outlet />
+                  <BottomNavigation />
+                </div>
+              </MultiOCRWorkflowProvider>
             </PromptsProvider>
           </FlowiseAgentsProvider>
         </MathpixSettingsProvider>
