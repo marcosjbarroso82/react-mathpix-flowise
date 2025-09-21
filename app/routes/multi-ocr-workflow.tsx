@@ -9,6 +9,7 @@ import MultiCameraCapture from '../components/MultiCameraCapture';
 import AgentSelector from '../components/AgentSelector';
 import WorkflowProgress from '../components/WorkflowProgress';
 import WorkflowShortcuts from '../components/WorkflowShortcuts';
+import ResultsSummary from '../components/ResultsSummary';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -208,7 +209,7 @@ export default function MultiOCRWorkflow() {
   };
 
   const canRunWorkflow = !isRunning && !hasConfigurationErrors && images.length > 0 && 
-                        config.questionCompilerAgentId && config.responseAgentIds.length > 0;
+                        !!config.questionCompilerAgentId && config.responseAgentIds.length > 0;
 
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: 'var(--color-background)' }}>
@@ -238,6 +239,9 @@ export default function MultiOCRWorkflow() {
           onReset={handleReset}
         />
 
+        {/* Results Summary Section */}
+        <ResultsSummary responseAgentsResults={responseAgentsResults} />
+
         {/* Configuration Section */}
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-medium mb-4" style={{ color: 'var(--color-text-primary)' }}>
@@ -259,6 +263,7 @@ export default function MultiOCRWorkflow() {
             {/* Response Agents */}
             <AgentSelector
               label="Agentes de Respuesta"
+              selectedAgentId=""
               selectedAgentIds={config.responseAgentIds}
               onAgentsSelect={handleResponseAgentsChange}
               multiple
