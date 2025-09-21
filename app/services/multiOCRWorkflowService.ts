@@ -267,14 +267,57 @@ export class MultiOCRWorkflowService {
       return `Error: ${agentResult.error}`;
     }
     
-    if (typeof agentResult.data === 'string') {
-      return agentResult.data;
+    // Buscar el campo "lectura" en diferentes niveles de la respuesta
+    if (agentResult.data) {
+      // Caso 1: data.lectura (directo)
+      if (agentResult.data.lectura) {
+        console.log('TTS: Encontrado campo lectura en data.lectura:', agentResult.data.lectura);
+        return agentResult.data.lectura;
+      }
+      
+      // Caso 2: data es un string
+      if (typeof agentResult.data === 'string') {
+        return agentResult.data;
+      }
+      
+      // Caso 3: data es un objeto, buscar lectura recursivamente
+      if (typeof agentResult.data === 'object') {
+        const findReadingField = (obj: any): string | null => {
+          // Buscar directamente el campo "lectura"
+          if (obj.lectura && typeof obj.lectura === 'string') {
+            return obj.lectura;
+          }
+          
+          // Buscar en propiedades anidadas
+          for (const key in obj) {
+            if (typeof obj[key] === 'object' && obj[key] !== null) {
+              const result = findReadingField(obj[key]);
+              if (result) return result;
+            }
+          }
+          return null;
+        };
+        
+        const reading = findReadingField(agentResult.data);
+        if (reading) {
+          console.log('TTS: Encontrado campo lectura recursivamente:', reading);
+          return reading;
+        }
+      }
+    }
+
+    // Si no se encuentra "lectura", buscar en el resultado completo
+    if (agentResult.lectura && typeof agentResult.lectura === 'string') {
+      console.log('TTS: Encontrado campo lectura en nivel raíz:', agentResult.lectura);
+      return agentResult.lectura;
     }
     
+    // Fallback: buscar campo text
     if (agentResult.data?.text) {
       return agentResult.data.text;
     }
     
+    console.log('TTS: No se encontró campo lectura, devolviendo JSON completo:', agentResult.data);
     return JSON.stringify(agentResult.data, null, 2);
   }
 }
