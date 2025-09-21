@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Check - MathPix OCR</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .criteria {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 5px 0;
+        }
+        .checkmark { font-size: 20px; }
+        .install-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .install-button:hover { background: #0056b3; }
+        .install-button:disabled { background: #6c757d; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 PWA Check - MathPix OCR</h1>
+        
+        <div id="results"></div>
+
+        <h2>Instalación Manual</h2>
+        <button id="installButton" class="install-button" disabled>
+            Instalar Aplicación
+        </button>
+        <button id="checkButton" class="install-button">
+            Verificar Nuevamente
+        </button>
+
+        <h2>Criterios de PWA</h2>
+        <div id="criteria-list"></div>
+
+        <h2>Información del Manifest</h2>
+        <div id="manifest-info"></div>
+    </div>
+
+    <script>
+        let deferredPrompt;
+        const resultsDiv = document.getElementById('results');
+        const criteriaList = document.getElementById('criteria-list');
+        const manifestInfo = document.getElementById('manifest-info');
+        const installButton = document.getElementById('installButton');
+        const checkButton = document.getElementById('checkButton');
+
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            resultsDiv.appendChild(div);
+        }
+
+        function addCriteria(name, status, details = '') {
+            const div = document.createElement('div');
+            div.className = 'criteria';
+            div.innerHTML = `
+                <div>
+                    <strong>${name}</strong>
+                    ${details ? `<br><small>${details}</small>` : ''}
+                </div>
+                <div class="checkmark">${status ? '✅' : '❌'}</div>
+            `;
+            criteriaList.appendChild(div);
+        }
+
+        async function checkPWACriteria() {
+            // Limpiar resultados anteriores
+            resultsDiv.innerHTML = '';
+            criteriaList.innerHTML = '';
+
+            addResult('Iniciando verificación de PWA...', 'info');
+
+            // 1. Verificar HTTPS
+            const isHTTPS = location.protocol === 'https:' || location.hostname === 'localhost';
+            addCriteria('HTTPS', isHTTPS, `Protocolo: ${location.protocol}`);
+
+            // 2. Verificar Service Worker
+            const hasServiceWorker = 'serviceWorker' in navigator;
+            let swRegistered = false;
+            if (hasServiceWorker) {
+                try {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    swRegistered = !!registration;
+                } catch (e) {
+                    swRegistered = false;
+                }
+            }
+            addCriteria('Service Worker', hasServiceWorker && swRegistered, 
+                hasServiceWorker ? (swRegistered ? 'Registrado' : 'No registrado') : 'No soportado');
+
+            // 3. Verificar Manifest
+            let manifestValid = false;
+            let manifestData = null;
+            try {
+                const response = await fetch('/manifest.json');
+                if (response.ok) {
+                    manifestData = await response.json();
+                    manifestValid = true;
+                }
+            } catch (e) {
+                manifestValid = false;
+            }
+            addCriteria('Manifest', manifestValid, manifestValid ? 'Cargado correctamente' : 'Error al cargar');
+
+            // 4. Verificar iconos
+            let hasIcons = false;
+            if (manifestData && manifestData.icons) {
+                hasIcons = manifestData.icons.length > 0;
+                const hasRequiredSizes = manifestData.icons.some(icon => 
+                    icon.sizes === '192x192' || icon.sizes === '512x512'
+                );
+                addCriteria('Iconos', hasIcons && hasRequiredSizes, 
+                    `${manifestData.icons.length} iconos, tamaños requeridos: ${hasRequiredSizes ? 'Sí' : 'No'}`);
+            } else {
+                addCriteria('Iconos', false, 'No encontrados en manifest');
+            }
+
+            // 5. Verificar display mode
+            const hasDisplayMode = manifestData && manifestData.display === 'standalone';
+            addCriteria('Display Mode', hasDisplayMode, 
+                hasDisplayMode ? 'Standalone' : 'No configurado como standalone');
+
+            // 6. Verificar start_url
+            const hasStartUrl = manifestData && manifestData.start_url;
+            addCriteria('Start URL', hasStartUrl, 
+                hasStartUrl ? manifestData.start_url : 'No definido');
+
+            // 7. Verificar nombre
+            const hasName = manifestData && manifestData.name && manifestData.short_name;
+            addCriteria('Nombres', hasName, 
+                hasName ? `${manifestData.name} (${manifestData.short_name})` : 'No definidos');
+
+            // 8. Verificar tema
+            const hasTheme = manifestData && manifestData.theme_color;
+            addCriteria('Tema', hasTheme, 
+                hasTheme ? `Color: ${manifestData.theme_color}` : 'No definido');
+
+            // Mostrar información del manifest
+            if (manifestData) {
+                manifestInfo.innerHTML = `
+                    <pre style="background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto;">
+${JSON.stringify(manifestData, null, 2)}
+                    </pre>
+                `;
+            }
+
+            // Verificar si cumple criterios básicos
+            const basicCriteria = isHTTPS && hasServiceWorker && swRegistered && manifestValid && hasIcons && hasDisplayMode;
+            
+            if (basicCriteria) {
+                addResult('✅ La aplicación cumple los criterios básicos de PWA', 'success');
+                addResult('Debería aparecer el prompt de instalación automáticamente', 'info');
+            } else {
+                addResult('❌ La aplicación NO cumple todos los criterios de PWA', 'error');
+                addResult('Revisa los elementos marcados con ❌ para corregir los problemas', 'warning');
+            }
+
+            // Verificar si ya está instalada
+            const isInstalled = window.matchMedia('(display-mode: standalone)').matches;
+            if (isInstalled) {
+                addResult('📱 La aplicación ya está instalada', 'info');
+            }
+        }
+
+        // Event listeners
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installButton.disabled = false;
+            addResult('✅ Prompt de instalación disponible', 'success');
+        });
+
+        window.addEventListener('appinstalled', () => {
+            addResult('🎉 ¡Aplicación instalada correctamente!', 'success');
+            installButton.disabled = true;
+            deferredPrompt = null;
+        });
+
+        installButton.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                const result = await deferredPrompt.prompt();
+                const choiceResult = await deferredPrompt.userChoice;
+                
+                if (choiceResult.outcome === 'accepted') {
+                    addResult('✅ Usuario aceptó la instalación', 'success');
+                } else {
+                    addResult('❌ Usuario rechazó la instalación', 'warning');
+                }
+                
+                deferredPrompt = null;
+                installButton.disabled = true;
+            }
+        });
+
+        checkButton.addEventListener('click', checkPWACriteria);
+
+        // Verificación inicial
+        checkPWACriteria();
+    </script>
+</body>
+</html>
