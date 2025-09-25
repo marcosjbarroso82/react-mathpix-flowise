@@ -20,6 +20,73 @@ export default function FlowiseAgents() {
   const [isLoadingResponse, setIsLoadingResponse] = useState(false);
   const [response, setResponse] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [filesError, setFilesError] = useState<string | null>(null);
+
+  // Validación independiente (sin Mathpix)
+  const validateFiles = (files: File[]): { validFiles: File[]; errors: string[] } => {
+    const allowedTypes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/gif',
+      'image/bmp',
+      'image/webp'
+    ];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+
+    const validFiles: File[] = [];
+    const errors: string[] = [];
+
+    files.forEach((file) => {
+      if (!allowedTypes.includes(file.type)) {
+        errors.push(`${file.name}: Tipo no soportado (${file.type || 'desconocido'})`);
+        return;
+      }
+      if (file.size > maxSize) {
+        errors.push(`${file.name}: Excede 10MB`);
+        return;
+      }
+      validFiles.push(file);
+    });
+
+    return { validFiles, errors };
+  };
+
+  const handleFilesSelected = (filesList: FileList | File[]) => {
+    const incoming = Array.from(filesList);
+    const { validFiles, errors } = validateFiles(incoming);
+    setFilesError(errors.length > 0 ? `Algunos archivos fueron rechazados:\n${errors.join('\n')}` : null);
+    if (validFiles.length > 0) {
+      // Acumular con los ya seleccionados
+      setSelectedFiles((prev) => [...prev, ...validFiles]);
+    }
+  };
+
+  const removeFileAtIndex = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const clearFiles = () => {
+    setSelectedFiles([]);
+    setFilesError(null);
+  };
+
+  const fileToDataURL = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result;
+        if (typeof result === 'string') {
+          resolve(result);
+        } else {
+          reject(new Error('No se pudo leer el archivo'));
+        }
+      };
+      reader.onerror = () => reject(reader.error || new Error('Error leyendo el archivo'));
+      reader.readAsDataURL(file);
+    });
+  };
 
   // Cargar prompt desde URL params
   useEffect(() => {
@@ -42,12 +109,27 @@ export default function FlowiseAgents() {
     setResponse(null);
 
     try {
+      let uploads: Array<{ type: 'file'; name: string; mime: string; data: string }> | undefined;
+      if (selectedFiles.length > 0) {
+        const dataUrls = await Promise.all(selectedFiles.map((f) => fileToDataURL(f)));
+        uploads = selectedFiles.map((file, idx) => ({
+          type: 'file',
+          name: file.name,
+          mime: file.type,
+          data: dataUrls[idx]
+        }));
+      }
+
       const response = await fetch(agent.url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ question: question.trim() })
+        body: JSON.stringify(
+          uploads && uploads.length > 0
+            ? { question: question.trim(), uploads }
+            : { question: question.trim() }
+        )
       });
 
       if (!response.ok) {
@@ -67,6 +149,7 @@ export default function FlowiseAgents() {
     setQuestion('');
     setResponse(null);
     setError(null);
+    clearFiles();
   };
 
   const handlePromptSelect = (promptId: string) => {
@@ -206,6 +289,70 @@ export default function FlowiseAgents() {
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
                     />
+                  </div>
+                  {/* Adjuntar Imágenes (opcional) */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-primary)' }}>
+                      Adjuntar Imágenes (opcional)
+                    </label>
+                    <div
+                      className={`border-2 border-dashed rounded-md p-4 text-center ${isLoadingResponse ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-blue-400 dark:hover:border-blue-500'} border-gray-300 dark:border-gray-600`}
+                      onDragOver={(ev) => { ev.preventDefault(); ev.stopPropagation(); }}
+                      onDrop={(ev) => { ev.preventDefault(); ev.stopPropagation(); if (!isLoadingResponse && ev.dataTransfer.files) handleFilesSelected(ev.dataTransfer.files); }}
+                      onClick={() => { if (!isLoadingResponse) { const input = document.getElementById('flowise-images-input') as HTMLInputElement | null; input?.click(); } }}
+                    >
+                      <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                        Arrastra imágenes aquí o haz clic para seleccionar
+                      </p>
+                      <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+                        Tipos: JPG, PNG, GIF, BMP, WebP. Máx 10MB por archivo.
+                      </p>
+                      <input
+                        id="flowise-images-input"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        disabled={isLoadingResponse}
+                        onChange={(e) => { if (e.target.files) { handleFilesSelected(e.target.files); e.target.value = ''; } }}
+                      />
+                    </div>
+                    {filesError && (
+                      <div className="mt-2 p-2 text-xs rounded-md" style={{ backgroundColor: 'rgba(220,38,38,0.1)', color: '#fca5a5' }}>
+                        {filesError}
+                      </div>
+                    )}
+                    {selectedFiles.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm" style={{ color: 'var(--color-text-primary)' }}>
+                            {selectedFiles.length} imagen{selectedFiles.length !== 1 ? 'es' : ''} seleccionada{selectedFiles.length !== 1 ? 's' : ''}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={clearFiles}
+                            className="text-xs text-red-600 hover:text-red-700"
+                          >
+                            Limpiar imágenes
+                          </button>
+                        </div>
+                        <ul className="text-xs space-y-1" style={{ color: 'var(--color-text-secondary)' }}>
+                          {selectedFiles.map((f, idx) => (
+                            <li key={`${f.name}-${idx}`} className="flex items-center justify-between">
+                              <span className="truncate mr-2">{f.name} ({Math.round(f.size / 1024)} KB)</span>
+                              <button
+                                type="button"
+                                onClick={() => removeFileAtIndex(idx)}
+                                className="text-red-600 hover:text-red-700"
+                                aria-label={`Eliminar ${f.name}`}
+                              >
+                                ✕
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                   <div className="flex space-x-2">
                     <button
