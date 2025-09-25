@@ -41,7 +41,7 @@ export class MathpixService {
 
       // Agregar opciones al FormData
       Object.entries(processingOptions).forEach(([key, value]) => {
-        formData.append(key, value.toString());
+        formData.append(key, String(value));
       });
 
       // Preparar información de la request

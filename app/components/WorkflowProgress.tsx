@@ -9,6 +9,7 @@ interface WorkflowProgressProps {
   compiledOCRText: string;
   questionCompilerResult: any;
   responseAgentsResults: { [agentId: string]: any };
+  directAgentsResults?: { [agentId: string]: any };
   isRunning: boolean;
   // TTS props
   enableTTS?: boolean;
@@ -31,6 +32,7 @@ export default function WorkflowProgress({
   compiledOCRText,
   questionCompilerResult,
   responseAgentsResults,
+  directAgentsResults = {},
   isRunning,
   enableTTS = false,
   onSpeakAgentResult,
@@ -322,6 +324,124 @@ export default function WorkflowProgress({
                     </div>
                   )}
                   <pre className="text-sm whitespace-pre-wrap overflow-x-auto text-purple-700 dark:text-purple-300">
+                    {MultiOCRWorkflowService.formatAgentResult(result)}
+                  </pre>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Direct Agents Results */}
+      {Object.keys(directAgentsResults).length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium" style={{ color: 'var(--color-text-primary)' }}>
+              Resultados de Agentes Directos
+            </h3>
+            
+            {/* TTS Controls */}
+            {enableTTS && (
+              <div className="flex items-center space-x-2">
+                {getTTSStatus && (() => {
+                  const ttsStatus = getTTSStatus();
+                  return (
+                    <>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {ttsStatus.isPlaying ? 'Reproduciendo...' : 
+                         ttsStatus.queueLength > 0 ? `En cola: ${ttsStatus.queueLength}` : 
+                         'TTS listo'}
+                      </div>
+                      <div className="flex space-x-1">
+                        {ttsStatus.isPlaying ? (
+                          <>
+                            <button
+                              onClick={onPauseTTS}
+                              className="p-1 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                              title="Pausar TTS"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={onResumeTTS}
+                              className="p-1 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                              title="Reanudar TTS"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m-6-8h8a2 2 0 012 2v8a2 2 0 01-2 2H8a2 2 0 01-2-2V6a2 2 0 012-2z" />
+                              </svg>
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={onPauseTTS}
+                            className="p-1 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                            title="Pausar TTS"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </button>
+                        )}
+                        <button
+                          onClick={onStopTTS}
+                          className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200"
+                          title="Detener TTS"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10h6v4H9z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={onClearTTSQueue}
+                          className="p-1 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                          title="Limpiar cola TTS"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+          
+          <div className="space-y-4">
+            {Object.entries(directAgentsResults).map(([agentId, result]) => {
+              const agent = agents.find(a => a.id === agentId);
+              const agentName = agent ? agent.name : `Agente ${agentId}`;
+              
+              return (
+                <div key={agentId} className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                      {agentName}
+                    </div>
+                    {enableTTS && onSpeakAgentResult && (
+                      <button
+                        onClick={() => onSpeakAgentResult(agentId, result)}
+                        className="p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+                        title="Leer respuesta con TTS"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 4.663 12 5.109 12 6v12c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                  {agent && (
+                    <div className="text-xs text-blue-600 dark:text-blue-400 mb-2 truncate">
+                      {agent.url}
+                    </div>
+                  )}
+                  <pre className="text-sm whitespace-pre-wrap overflow-x-auto text-blue-700 dark:text-blue-300">
                     {MultiOCRWorkflowService.formatAgentResult(result)}
                   </pre>
                 </div>

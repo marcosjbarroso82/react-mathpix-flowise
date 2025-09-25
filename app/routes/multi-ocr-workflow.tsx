@@ -3,6 +3,7 @@ import type { Route } from "./+types/multi-ocr-workflow";
 import { useMultiOCRWorkflow } from '../contexts/MultiOCRWorkflowContext';
 import { useFlowiseAgents } from '../contexts/FlowiseAgentsContext';
 import { useMathpixSettings } from '../contexts/MathpixSettingsContext';
+import { usePrompts } from '../contexts/PromptsContext';
 import { MultiOCRWorkflowService } from '../services/multiOCRWorkflowService';
 import { useTTS } from '../hooks/useTTS';
 import MultiFileUpload from '../components/MultiFileUpload';
@@ -40,6 +41,8 @@ export default function MultiOCRWorkflow() {
     setQuestionCompilerResult,
     responseAgentsResults,
     setResponseAgentResult,
+    directAgentsResults,
+    setDirectAgentResult,
     clearResults,
     isRunning,
     setIsRunning,
@@ -50,6 +53,7 @@ export default function MultiOCRWorkflow() {
 
   const { agents } = useFlowiseAgents();
   const { settings: mathpixSettings } = useMathpixSettings();
+  const { prompts } = usePrompts();
 
   // TTS Hook
   const {
@@ -62,6 +66,7 @@ export default function MultiOCRWorkflow() {
   } = useTTS({
     enabled: config.enableTTS,
     responseAgentsResults,
+    directAgentsResults,
     agents,
     isRunning
   });
@@ -87,6 +92,18 @@ export default function MultiOCRWorkflow() {
     saveConfig(newConfig);
   };
 
+  const handleDirectAgentsChange = (agentIds: string[]) => {
+    const newConfig = { ...config, directAgentsIds: agentIds };
+    updateConfig(newConfig);
+    saveConfig(newConfig);
+  };
+
+  const handlePromptSelect = (promptId: string) => {
+    const newConfig = { ...config, selectedPromptId: promptId };
+    updateConfig(newConfig);
+    saveConfig(newConfig);
+  };
+
   // Validation
   const validateConfiguration = useCallback(() => {
     const errors: string[] = [];
@@ -103,6 +120,11 @@ export default function MultiOCRWorkflow() {
 
     if (config.responseAgentIds.length === 0) {
       errors.push('No hay agentes de respuesta seleccionados');
+    }
+
+    // Validate direct agents configuration (opcional)
+    if (config.directAgentsIds.length > 0 && !config.selectedPromptId) {
+      errors.push('Debe seleccionar un prompt para los agentes directos');
     }
 
     // Validate images
@@ -130,65 +152,103 @@ export default function MultiOCRWorkflow() {
       // Get agents
       const questionCompilerAgent = agents.find(a => a.id === config.questionCompilerAgentId);
       const responseAgents = agents.filter(a => config.responseAgentIds.includes(a.id));
+      const directAgents = agents.filter(a => config.directAgentsIds.includes(a.id));
+      const selectedPrompt = prompts.find(p => p.id === config.selectedPromptId);
 
       if (!questionCompilerAgent) {
         throw new Error('Agente compilador no encontrado');
       }
 
-      // Run workflow with callbacks
-      const result = await MultiOCRWorkflowService.processWorkflow(
-        images,
-        questionCompilerAgent,
-        responseAgents,
-        {
-          appId: mathpixSettings.appId,
-          appKey: mathpixSettings.appKey,
-          includeMath: mathpixSettings.includeMath,
-          outputFormats: mathpixSettings.outputFormats
+      // Preparar callbacks compartidos
+      const sharedCallbacks = {
+        onImageOCRStart: (imageId: string) => {
+          updateImageStatus(imageId, 'processing');
         },
-        {
-          onImageOCRStart: (imageId) => {
-            updateImageStatus(imageId, 'processing');
-          },
-          onImageOCRComplete: (imageId, result) => {
-            updateImageStatus(imageId, 'completed', result);
-          },
-          onImageOCRError: (imageId, error) => {
-            updateImageStatus(imageId, 'error', { status: 0, data: null, error });
-          },
-          onStepStart: (stepId) => {
-            updateWorkflowStep(stepId, { 
-              status: 'processing', 
-              startTime: new Date() 
-            });
-          },
-          onStepComplete: (stepId, stepResult) => {
-            updateWorkflowStep(stepId, { 
-              status: 'completed', 
-              endTime: new Date(),
-              result: stepResult 
-            });
-          },
-          onStepError: (stepId, error) => {
-            updateWorkflowStep(stepId, { 
-              status: 'error', 
-              endTime: new Date(),
-              error 
-            });
-          }
+        onImageOCRComplete: (imageId: string, result: any) => {
+          updateImageStatus(imageId, 'completed', result);
+        },
+        onImageOCRError: (imageId: string, error: string) => {
+          updateImageStatus(imageId, 'error', { status: 0, data: null, error });
+        },
+        onStepStart: (stepId: string) => {
+          updateWorkflowStep(stepId, { 
+            status: 'processing', 
+            startTime: new Date() 
+          });
+        },
+        onStepComplete: (stepId: string, stepResult: any) => {
+          updateWorkflowStep(stepId, { 
+            status: 'completed', 
+            endTime: new Date(),
+            result: stepResult 
+          });
+        },
+        onStepError: (stepId: string, error: string) => {
+          updateWorkflowStep(stepId, { 
+            status: 'error', 
+            endTime: new Date(),
+            error 
+          });
         }
+      };
+
+      // Ejecutar ambos workflows en paralelo
+      const promises: Promise<any>[] = [];
+
+      // Workflow Mathpix OCR
+      promises.push(
+        MultiOCRWorkflowService.processWorkflow(
+          images,
+          questionCompilerAgent,
+          responseAgents,
+          {
+            appId: mathpixSettings.appId,
+            appKey: mathpixSettings.appKey,
+            includeMath: mathpixSettings.includeMath,
+            outputFormats: mathpixSettings.outputFormats
+          },
+          sharedCallbacks
+        )
       );
 
-      // Update results
-      if (result.success) {
-        setCompiledOCRText(result.compiledOCRText);
-        setQuestionCompilerResult(result.questionCompilerResult);
+      // Workflow Directo a Agentes (solo si hay agentes y prompt seleccionados)
+      if (directAgents.length > 0 && selectedPrompt) {
+        promises.push(
+          MultiOCRWorkflowService.processDirectAgents(
+            images,
+            directAgents,
+            selectedPrompt,
+            sharedCallbacks
+          )
+        );
+      }
+
+      // Esperar a que ambos workflows terminen
+      const results = await Promise.all(promises);
+
+      // Procesar resultados del workflow Mathpix OCR
+      const mathpixResult = results[0];
+      if (mathpixResult.success) {
+        setCompiledOCRText(mathpixResult.compiledOCRText);
+        setQuestionCompilerResult(mathpixResult.questionCompilerResult);
         
-        Object.entries(result.responseAgentsResults).forEach(([agentId, agentResult]) => {
+        Object.entries(mathpixResult.responseAgentsResults).forEach(([agentId, agentResult]) => {
           setResponseAgentResult(agentId, agentResult);
         });
       } else {
-        alert(`Error en el workflow: ${result.error}`);
+        alert(`Error en el workflow Mathpix OCR: ${mathpixResult.error}`);
+      }
+
+      // Procesar resultados del workflow Directo a Agentes (si existe)
+      if (results.length > 1) {
+        const directResult = results[1];
+        if (directResult.success) {
+          Object.entries(directResult.directAgentsResults).forEach(([agentId, agentResult]) => {
+            setDirectAgentResult(agentId, agentResult);
+          });
+        } else {
+          alert(`Error en el workflow Directo a Agentes: ${directResult.error}`);
+        }
       }
 
     } catch (error) {
@@ -232,14 +292,15 @@ export default function MultiOCRWorkflow() {
   };
 
   const canRunWorkflow = !isRunning && !hasConfigurationErrors && images.length > 0 && 
-                        !!config.questionCompilerAgentId && config.responseAgentIds.length > 0;
+                        !!config.questionCompilerAgentId && config.responseAgentIds.length > 0 &&
+                        (config.directAgentsIds.length === 0 || !!config.selectedPromptId);
 
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: 'var(--color-background)' }}>
       {/* Header */}
       <PageHeader 
         title="Multi-OCR Workflow" 
-        description="Procesamiento avanzado con múltiples imágenes OCR y agentes de IA"
+        description="Procesamiento avanzado con Mathpix OCR y envío directo a agentes en paralelo"
         icon="⚡"
       />
 
@@ -257,7 +318,10 @@ export default function MultiOCRWorkflow() {
         />
 
         {/* Results Summary Section */}
-        <ResultsSummary responseAgentsResults={responseAgentsResults} />
+        <ResultsSummary 
+          responseAgentsResults={responseAgentsResults} 
+          directAgentsResults={directAgentsResults}
+        />
 
         {/* Configuration Section */}
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
@@ -333,6 +397,58 @@ export default function MultiOCRWorkflow() {
               </div>
             )}
           </div>
+
+          {/* Direct Agents Configuration */}
+          {(agents.length > 0 && prompts.length > 0) && (
+            <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+              <h3 className="text-lg font-medium mb-4" style={{ color: 'var(--color-text-primary)' }}>
+                Workflow Directo a Agentes (Opcional)
+              </h3>
+              <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+                Envía las imágenes directamente a agentes seleccionados con un prompt específico, ejecutándose en paralelo con el workflow Mathpix OCR.
+              </p>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Direct Agents Selection */}
+                <AgentSelector
+                  label="Agentes Directos"
+                  selectedAgentId=""
+                  selectedAgentIds={config.directAgentsIds}
+                  onAgentsSelect={handleDirectAgentsChange}
+                  multiple
+                  helpText="Estos agentes recibirán las imágenes directamente con el prompt seleccionado."
+                  disabled={isRunning}
+                />
+
+                {/* Prompt Selection */}
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-primary)' }}>
+                    Prompt para Agentes Directos
+                  </label>
+                  <select
+                    value={config.selectedPromptId}
+                    onChange={(e) => handlePromptSelect(e.target.value)}
+                    disabled={isRunning}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="">Selecciona un prompt...</option>
+                    {prompts.map((prompt) => (
+                      <option key={prompt.id} value={prompt.id}>
+                        {prompt.name}
+                      </option>
+                    ))}
+                  </select>
+                  {config.selectedPromptId && (
+                    <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                      <p className="text-xs text-blue-700 dark:text-blue-300">
+                        <strong>Prompt seleccionado:</strong> {prompts.find(p => p.id === config.selectedPromptId)?.content}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Configuration Status */}
           <div className="mt-4 flex items-center justify-between">
@@ -476,6 +592,7 @@ export default function MultiOCRWorkflow() {
           compiledOCRText={compiledOCRText}
           questionCompilerResult={questionCompilerResult}
           responseAgentsResults={responseAgentsResults}
+          directAgentsResults={directAgentsResults}
           isRunning={isRunning}
           enableTTS={config.enableTTS}
           onSpeakAgentResult={speakAgentResult}
@@ -491,35 +608,69 @@ export default function MultiOCRWorkflow() {
           <h3 className="text-lg font-medium text-blue-800 dark:text-blue-200 mb-3">
             ¿Cómo funciona el Multi-OCR Workflow?
           </h3>
-          <div className="space-y-3 text-sm text-blue-700 dark:text-blue-300">
-            <div className="flex items-start space-x-2">
-              <span className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-xs font-bold text-blue-800 dark:text-blue-200">1</span>
-              <div>
-                <strong>Captura de Imágenes:</strong> Sube archivos desde tu dispositivo o captura fotos con la cámara (hasta {config.maxImages} imágenes).
+          
+          {/* Workflow Mathpix OCR */}
+          <div className="mb-6">
+            <h4 className="text-md font-medium text-blue-800 dark:text-blue-200 mb-3">
+              📄 Workflow Mathpix OCR
+            </h4>
+            <div className="space-y-3 text-sm text-blue-700 dark:text-blue-300">
+              <div className="flex items-start space-x-2">
+                <span className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-xs font-bold text-blue-800 dark:text-blue-200">1</span>
+                <div>
+                  <strong>Captura de Imágenes:</strong> Sube archivos desde tu dispositivo o captura fotos con la cámara (hasta {config.maxImages} imágenes).
+                </div>
+              </div>
+              <div className="flex items-start space-x-2">
+                <span className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-xs font-bold text-blue-800 dark:text-blue-200">2</span>
+                <div>
+                  <strong>Procesamiento OCR:</strong> Las imágenes se procesan en paralelo con Mathpix OCR para extraer texto y fórmulas.
+                </div>
+              </div>
+              <div className="flex items-start space-x-2">
+                <span className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-xs font-bold text-blue-800 dark:text-blue-200">3</span>
+                <div>
+                  <strong>Compilación:</strong> Los resultados OCR se compilan en un texto estructurado con formato "OCR #1 {'{'}texto{'}'} FIN OCR #1".
+                </div>
+              </div>
+              <div className="flex items-start space-x-2">
+                <span className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-xs font-bold text-blue-800 dark:text-blue-200">4</span>
+                <div>
+                  <strong>Agente Compilador:</strong> El texto compilado se envía al agente compilador que genera una pregunta o consulta procesada.
+                </div>
+              </div>
+              <div className="flex items-start space-x-2">
+                <span className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-xs font-bold text-blue-800 dark:text-blue-200">5</span>
+                <div>
+                  <strong>Agentes de Respuesta:</strong> La respuesta del compilador se envía en paralelo a múltiples agentes especializados.
+                </div>
               </div>
             </div>
-            <div className="flex items-start space-x-2">
-              <span className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-xs font-bold text-blue-800 dark:text-blue-200">2</span>
-              <div>
-                <strong>Procesamiento OCR:</strong> Las imágenes se procesan en paralelo con Mathpix OCR para extraer texto y fórmulas.
+          </div>
+
+          {/* Workflow Directo a Agentes */}
+          <div className="mb-4">
+            <h4 className="text-md font-medium text-blue-800 dark:text-blue-200 mb-3">
+              🚀 Workflow Directo a Agentes (Opcional)
+            </h4>
+            <div className="space-y-3 text-sm text-blue-700 dark:text-blue-300">
+              <div className="flex items-start space-x-2">
+                <span className="flex-shrink-0 w-6 h-6 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center text-xs font-bold text-green-800 dark:text-green-200">1</span>
+                <div>
+                  <strong>Selección de Agentes:</strong> Elige uno o más agentes que recibirán las imágenes directamente.
+                </div>
               </div>
-            </div>
-            <div className="flex items-start space-x-2">
-              <span className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-xs font-bold text-blue-800 dark:text-blue-200">3</span>
-              <div>
-                <strong>Compilación:</strong> Los resultados OCR se compilan en un texto estructurado con formato "OCR #1 {'{'}texto{'}'} FIN OCR #1".
+              <div className="flex items-start space-x-2">
+                <span className="flex-shrink-0 w-6 h-6 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center text-xs font-bold text-green-800 dark:text-green-200">2</span>
+                <div>
+                  <strong>Selección de Prompt:</strong> Elige un prompt que se aplicará a todos los agentes seleccionados.
+                </div>
               </div>
-            </div>
-            <div className="flex items-start space-x-2">
-              <span className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-xs font-bold text-blue-800 dark:text-blue-200">4</span>
-              <div>
-                <strong>Agente Compilador:</strong> El texto compilado se envía al agente compilador que genera una pregunta o consulta procesada.
-              </div>
-            </div>
-            <div className="flex items-start space-x-2">
-              <span className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-xs font-bold text-blue-800 dark:text-blue-200">5</span>
-              <div>
-                <strong>Agentes de Respuesta:</strong> La respuesta del compilador se envía en paralelo a múltiples agentes especializados.
+              <div className="flex items-start space-x-2">
+                <span className="flex-shrink-0 w-6 h-6 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center text-xs font-bold text-green-800 dark:text-green-200">3</span>
+                <div>
+                  <strong>Envío Directo:</strong> Las imágenes se envían directamente a cada agente con el prompt seleccionado, ejecutándose en paralelo con el workflow Mathpix OCR.
+                </div>
               </div>
             </div>
           </div>

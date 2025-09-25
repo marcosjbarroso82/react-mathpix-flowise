@@ -5,9 +5,10 @@ import { useUI } from '../contexts/UIContext';
 
 interface ResultsSummaryProps {
   responseAgentsResults: { [agentId: string]: any };
+  directAgentsResults?: { [agentId: string]: any };
 }
 
-export default function ResultsSummary({ responseAgentsResults }: ResultsSummaryProps) {
+export default function ResultsSummary({ responseAgentsResults, directAgentsResults = {} }: ResultsSummaryProps) {
   const { agents } = useFlowiseAgents();
   const { uiSettings } = useUI();
 
@@ -62,12 +63,16 @@ export default function ResultsSummary({ responseAgentsResults }: ResultsSummary
   };
 
   // Verificar si hay resultados para mostrar
-  const hasResults = Object.keys(responseAgentsResults).length > 0;
-  const hasValidResults = Object.values(responseAgentsResults).some(result => 
+  const hasResponseResults = Object.keys(responseAgentsResults).length > 0;
+  const hasDirectResults = Object.keys(directAgentsResults).length > 0;
+  const hasValidResponseResults = Object.values(responseAgentsResults).some(result => 
+    result && !result.error && extractReadingField(result) !== 'Sin resultado'
+  );
+  const hasValidDirectResults = Object.values(directAgentsResults).some(result => 
     result && !result.error && extractReadingField(result) !== 'Sin resultado'
   );
 
-  if (!hasResults || !hasValidResults) {
+  if ((!hasResponseResults || !hasValidResponseResults) && (!hasDirectResults || !hasValidDirectResults)) {
     return null;
   }
 
@@ -79,34 +84,82 @@ export default function ResultsSummary({ responseAgentsResults }: ResultsSummary
         </h2>
       )}
       
-      <div className="space-y-4">
-        {Object.entries(responseAgentsResults).map(([agentId, result]) => {
-          const agent = agents.find(a => a.id === agentId);
-          const agentName = agent ? agent.name : `Agente ${agentId}`;
-          const reading = extractReadingField(result);
-          
-          // Solo mostrar si hay contenido válido
-          if (!reading || reading === 'Sin resultado') {
-            return null;
-          }
+      <div className="space-y-6">
+        {/* Resultados de Agentes de Respuesta (Mathpix OCR) */}
+        {hasValidResponseResults && (
+          <div>
+            <h3 className="text-md font-medium mb-3" style={{ color: 'var(--color-text-primary)' }}>
+              📄 Resultados Mathpix OCR
+            </h3>
+            <div className="space-y-4">
+              {Object.entries(responseAgentsResults).map(([agentId, result]) => {
+                const agent = agents.find(a => a.id === agentId);
+                const agentName = agent ? agent.name : `Agente ${agentId}`;
+                const reading = extractReadingField(result);
+                
+                // Solo mostrar si hay contenido válido
+                if (!reading || reading === 'Sin resultado') {
+                  return null;
+                }
 
-          return (
-            <div key={agentId} className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-green-800 dark:text-green-200">
-                  {agentName}
-                </h3>
-                <div className="text-xs text-green-600 dark:text-green-400">
-                  Lectura
-                </div>
-              </div>
-              
-              <div className="text-sm text-green-700 dark:text-green-300 whitespace-pre-wrap">
-                {reading}
-              </div>
+                return (
+                  <div key={agentId} className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-medium text-green-800 dark:text-green-200">
+                        {agentName}
+                      </h4>
+                      <div className="text-xs text-green-600 dark:text-green-400">
+                        Lectura
+                      </div>
+                    </div>
+                    
+                    <div className="text-sm text-green-700 dark:text-green-300 whitespace-pre-wrap">
+                      {reading}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
+          </div>
+        )}
+
+        {/* Resultados de Agentes Directos */}
+        {hasValidDirectResults && (
+          <div>
+            <h3 className="text-md font-medium mb-3" style={{ color: 'var(--color-text-primary)' }}>
+              🚀 Resultados Agentes Directos
+            </h3>
+            <div className="space-y-4">
+              {Object.entries(directAgentsResults).map(([agentId, result]) => {
+                const agent = agents.find(a => a.id === agentId);
+                const agentName = agent ? agent.name : `Agente ${agentId}`;
+                const reading = extractReadingField(result);
+                
+                // Solo mostrar si hay contenido válido
+                if (!reading || reading === 'Sin resultado') {
+                  return null;
+                }
+
+                return (
+                  <div key={agentId} className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                        {agentName}
+                      </h4>
+                      <div className="text-xs text-blue-600 dark:text-blue-400">
+                        Lectura
+                      </div>
+                    </div>
+                    
+                    <div className="text-sm text-blue-700 dark:text-blue-300 whitespace-pre-wrap">
+                      {reading}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
       
       {/* Información adicional */}

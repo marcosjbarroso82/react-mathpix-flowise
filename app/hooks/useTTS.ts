@@ -5,6 +5,7 @@ import { MultiOCRWorkflowService } from '../services/multiOCRWorkflowService';
 interface UseTTSProps {
   enabled: boolean;
   responseAgentsResults: { [agentId: string]: any };
+  directAgentsResults?: { [agentId: string]: any };
   agents: Array<{ id: string; name: string }>;
   isRunning?: boolean; // Para detectar cuando inicia un nuevo workflow
 }
@@ -27,7 +28,7 @@ interface UseTTSReturn {
  * Hook para manejar Text-to-Speech en el Multi-OCR Workflow
  * Se encarga de leer automáticamente las respuestas de los agentes cuando terminan
  */
-export function useTTS({ enabled, responseAgentsResults, agents, isRunning = false }: UseTTSProps): UseTTSReturn {
+export function useTTS({ enabled, responseAgentsResults, directAgentsResults = {}, agents, isRunning = false }: UseTTSProps): UseTTSReturn {
   const previousResultsRef = useRef<{ [agentId: string]: any }>({});
   const processedAgentsRef = useRef<Set<string>>(new Set());
 
@@ -51,7 +52,13 @@ export function useTTS({ enabled, responseAgentsResults, agents, isRunning = fal
   useEffect(() => {
     if (!enabled) return;
 
-    Object.entries(responseAgentsResults).forEach(([agentId, agentResult]) => {
+    // Unir resultados de agentes de respuesta y directos
+    const combinedResults: { [agentId: string]: any } = {
+      ...responseAgentsResults,
+      ...directAgentsResults
+    };
+
+    Object.entries(combinedResults).forEach(([agentId, agentResult]) => {
       // Solo procesar si es un resultado nuevo y no hay error
       const previousResult = previousResultsRef.current[agentId];
       const isNewResult = !previousResult || 
@@ -89,9 +96,9 @@ export function useTTS({ enabled, responseAgentsResults, agents, isRunning = fal
       }
     });
 
-    // Actualizar referencia de resultados anteriores
-    previousResultsRef.current = { ...responseAgentsResults };
-  }, [responseAgentsResults, agents, enabled]);
+    // Actualizar referencia de resultados anteriores con el combinado
+    previousResultsRef.current = { ...combinedResults };
+  }, [responseAgentsResults, directAgentsResults, agents, enabled]);
 
   // Limpiar estado cuando se deshabilita TTS
   useEffect(() => {
@@ -105,11 +112,11 @@ export function useTTS({ enabled, responseAgentsResults, agents, isRunning = fal
   // Resetear estados cuando se limpian los resultados (nuevo workflow)
   useEffect(() => {
     // Si no hay resultados de agentes, resetear estados
-    if (Object.keys(responseAgentsResults).length === 0) {
+    if (Object.keys(responseAgentsResults).length === 0 && Object.keys(directAgentsResults).length === 0) {
       processedAgentsRef.current.clear();
       previousResultsRef.current = {};
     }
-  }, [responseAgentsResults]);
+  }, [responseAgentsResults, directAgentsResults]);
 
   // Función para leer manualmente un resultado de agente
   const speakAgentResult = useCallback((agentId: string, agentResult: any) => {

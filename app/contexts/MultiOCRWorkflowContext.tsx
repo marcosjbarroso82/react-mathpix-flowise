@@ -6,6 +6,9 @@ export interface MultiOCRWorkflowConfig {
   responseAgentIds: string[];
   maxImages: number;
   enableTTS: boolean;
+  // Nueva configuración para workflow directo a agentes
+  directAgentsIds: string[];
+  selectedPromptId: string;
 }
 
 export interface ImageItem {
@@ -37,6 +40,9 @@ export const DEFAULT_MULTI_OCR_WORKFLOW_CONFIG: MultiOCRWorkflowConfig = {
   responseAgentIds: [],
   maxImages: 3,
   enableTTS: false,
+  // Nueva configuración para workflow directo a agentes
+  directAgentsIds: [],
+  selectedPromptId: '',
 };
 
 interface MultiOCRWorkflowContextType {
@@ -66,6 +72,9 @@ interface MultiOCRWorkflowContextType {
   setQuestionCompilerResult: (result: any) => void;
   responseAgentsResults: { [agentId: string]: any };
   setResponseAgentResult: (agentId: string, result: any) => void;
+  // Resultados de agentes directos
+  directAgentsResults: { [agentId: string]: any };
+  setDirectAgentResult: (agentId: string, result: any) => void;
   clearResults: () => void;
   
   // Workflow control
@@ -95,6 +104,7 @@ export function MultiOCRWorkflowProvider({ children }: MultiOCRWorkflowProviderP
   const [compiledOCRText, setCompiledOCRText] = useState<string>('');
   const [questionCompilerResult, setQuestionCompilerResult] = useState<any>(null);
   const [responseAgentsResults, setResponseAgentsResults] = useState<{ [agentId: string]: any }>({});
+  const [directAgentsResults, setDirectAgentsResults] = useState<{ [agentId: string]: any }>({});
 
   // Cargar configuración desde localStorage al inicializar
   useEffect(() => {
@@ -214,10 +224,18 @@ export function MultiOCRWorkflowProvider({ children }: MultiOCRWorkflowProviderP
     }));
   };
 
+  const setDirectAgentResult = (agentId: string, result: any) => {
+    setDirectAgentsResults(prev => ({
+      ...prev,
+      [agentId]: result
+    }));
+  };
+
   const clearResults = () => {
     setCompiledOCRText('');
     setQuestionCompilerResult(null);
     setResponseAgentsResults({});
+    setDirectAgentsResults({});
   };
 
   // Función para cancelar workflow en ejecución (mantiene resultados)
@@ -275,6 +293,8 @@ export function MultiOCRWorkflowProvider({ children }: MultiOCRWorkflowProviderP
     setQuestionCompilerResult,
     responseAgentsResults,
     setResponseAgentResult,
+    directAgentsResults,
+    setDirectAgentResult,
     clearResults,
     
     // Workflow control

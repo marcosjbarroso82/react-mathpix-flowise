@@ -1,6 +1,7 @@
 import { MathpixService } from './mathpixService';
 import type { FlowiseAgent } from '../contexts/FlowiseAgentsContext';
 import type { ImageItem, WorkflowStep } from '../contexts/MultiOCRWorkflowContext';
+import type { Prompt } from '../contexts/PromptsContext';
 
 export interface OCROptions {
   appId: string;
@@ -319,5 +320,148 @@ export class MultiOCRWorkflowService {
     
     console.log('TTS: No se encontró campo lectura, devolviendo JSON completo:', agentResult.data);
     return JSON.stringify(agentResult.data, null, 2);
+  }
+
+  // Nueva función para procesar agentes directos con imágenes
+  static async processDirectAgents(
+    images: ImageItem[],
+    directAgents: FlowiseAgent[],
+    selectedPrompt: Prompt,
+    callbacks?: WorkflowCallbacks
+  ): Promise<{
+    directAgentsResults: { [agentId: string]: any };
+    success: boolean;
+    error?: string;
+  }> {
+    try {
+      callbacks?.onStepStart?.('direct-agents');
+      callbacks?.onProgress?.(1, 1, 'Procesando con agentes directos...');
+
+      // Convertir imágenes a Data URLs
+      const uploads = await this.convertImagesToUploads(images);
+
+      // Procesar todos los agentes en paralelo
+      const directAgentsResults = await this.processDirectAgentsParallel(
+        directAgents,
+        selectedPrompt.content,
+        uploads,
+        callbacks
+      );
+
+      callbacks?.onStepComplete?.('direct-agents', directAgentsResults);
+
+      return {
+        directAgentsResults,
+        success: true
+      };
+
+    } catch (error) {
+      console.error('Error in Direct Agents Workflow:', error);
+      return {
+        directAgentsResults: {},
+        success: false,
+        error: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  private static async convertImagesToUploads(images: ImageItem[]): Promise<Array<{ type: 'file'; name: string; mime: string; data: string }>> {
+    const uploads: Array<{ type: 'file'; name: string; mime: string; data: string }> = [];
+    
+    for (const image of images) {
+      try {
+        const dataUrl = await this.fileToDataURL(image.file);
+        uploads.push({
+          type: 'file',
+          name: image.name,
+          mime: image.file.type,
+          data: dataUrl
+        });
+      } catch (error) {
+        console.error(`Error converting image ${image.name} to Data URL:`, error);
+        // Continuar con las demás imágenes aunque una falle
+      }
+    }
+    
+    return uploads;
+  }
+
+  private static fileToDataURL(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result;
+        if (typeof result === 'string') {
+          resolve(result);
+        } else {
+          reject(new Error('No se pudo leer el archivo'));
+        }
+      };
+      reader.onerror = () => reject(reader.error || new Error('Error leyendo el archivo'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  private static async processDirectAgentsParallel(
+    directAgents: FlowiseAgent[],
+    promptContent: string,
+    uploads: Array<{ type: 'file'; name: string; mime: string; data: string }>,
+    callbacks?: WorkflowCallbacks
+  ): Promise<{ [agentId: string]: any }> {
+    const promises = directAgents.map(async (agent) => {
+      try {
+        const result = await this.callFlowiseAgentWithUploads(agent, promptContent, uploads);
+        return { agentId: agent.id, result };
+      } catch (error) {
+        return {
+          agentId: agent.id,
+          result: {
+            data: null,
+            error: error instanceof Error ? error.message : 'Error desconocido'
+          }
+        };
+      }
+    });
+
+    const results = await Promise.all(promises);
+    
+    // Convertir array a objeto con agentId como key
+    const directAgentsResults: { [agentId: string]: any } = {};
+    results.forEach(({ agentId, result }) => {
+      directAgentsResults[agentId] = result;
+    });
+
+    return directAgentsResults;
+  }
+
+  private static async callFlowiseAgentWithUploads(
+    agent: FlowiseAgent,
+    question: string,
+    uploads: Array<{ type: 'file'; name: string; mime: string; data: string }>
+  ): Promise<{ data: any; error?: string }> {
+    try {
+      const response = await fetch(agent.url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          question: question.trim(),
+          uploads: uploads
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      return { data: result };
+    } catch (error) {
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
   }
 }
