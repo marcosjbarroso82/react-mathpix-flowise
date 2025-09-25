@@ -1,5 +1,7 @@
 # React Flowise Agents Platform
 
+Version v-2025-09-25
+
 Una plataforma base para probar y experimentar con agentes de Flowise AI. Este proyecto combina funcionalidades de captura de imágenes con `react-webcam` y procesamiento OCR con la API de Mathpix, además de proporcionar una base sólida para integrar agentes de Flowise.
 
 ## 🎯 Objetivo
