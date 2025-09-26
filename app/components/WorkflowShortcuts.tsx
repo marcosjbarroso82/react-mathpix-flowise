@@ -3,10 +3,21 @@ import Webcam from 'react-webcam';
 import { useCameraSettings } from '../contexts/CameraSettingsContext';
 import { useUI } from '../contexts/UIContext';
 
+// Función para obtener la ruta base correcta según el entorno
+const getBasePath = () => {
+  // En producción (GitHub Pages), usar el base path del repositorio
+  if (process.env.NODE_ENV === 'production') {
+    return '/react-mathpix-flowise';
+  }
+  // En desarrollo, usar ruta raíz
+  return '';
+};
+
 // Función para reproducir sonido de click
 const playClickSound = () => {
   try {
-    const audio = new Audio('/sounds/click.mp3');
+    const basePath = getBasePath();
+    const audio = new Audio(`${basePath}/sounds/click.mp3`);
     audio.volume = 0.5; // Volumen moderado para click
     audio.play().catch(error => {
       console.log('No se pudo reproducir el sonido de click:', error);
@@ -19,7 +30,8 @@ const playClickSound = () => {
 // Función para reproducir sonidos de archivos WAV en loop
 const playHoverSound = (soundFile: string) => {
   try {
-    const audio = new Audio(`/sounds/${soundFile}`);
+    const basePath = getBasePath();
+    const audio = new Audio(`${basePath}/sounds/${soundFile}`);
     audio.volume = 0.3; // Volumen moderado para hover
     audio.loop = true; // Reproducir en loop
     audio.play().catch(error => {
