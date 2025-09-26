@@ -5,11 +5,11 @@ import { useUI } from '../contexts/UIContext';
 
 // Función para obtener la ruta base correcta según el entorno
 const getBasePath = () => {
-  // En producción (GitHub Pages), usar el base path del repositorio
-  if (process.env.NODE_ENV === 'production') {
+  // Detectar si estamos en GitHub Pages basándose en la URL actual
+  if (typeof window !== 'undefined' && window.location.pathname.includes('/react-mathpix-flowise')) {
     return '/react-mathpix-flowise';
   }
-  // En desarrollo, usar ruta raíz
+  // En desarrollo o si no detectamos GitHub Pages, usar ruta raíz
   return '';
 };
 
@@ -17,7 +17,9 @@ const getBasePath = () => {
 const playClickSound = () => {
   try {
     const basePath = getBasePath();
-    const audio = new Audio(`${basePath}/sounds/click.mp3`);
+    const soundPath = `${basePath}/sounds/click.mp3`;
+    console.log('Reproduciendo sonido de click desde:', soundPath);
+    const audio = new Audio(soundPath);
     audio.volume = 0.5; // Volumen moderado para click
     audio.play().catch(error => {
       console.log('No se pudo reproducir el sonido de click:', error);
@@ -31,7 +33,9 @@ const playClickSound = () => {
 const playHoverSound = (soundFile: string) => {
   try {
     const basePath = getBasePath();
-    const audio = new Audio(`${basePath}/sounds/${soundFile}`);
+    const soundPath = `${basePath}/sounds/${soundFile}`;
+    console.log('Reproduciendo sonido de hover desde:', soundPath);
+    const audio = new Audio(soundPath);
     audio.volume = 0.3; // Volumen moderado para hover
     audio.loop = true; // Reproducir en loop
     audio.play().catch(error => {
