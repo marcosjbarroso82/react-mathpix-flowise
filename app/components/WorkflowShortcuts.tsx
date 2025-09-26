@@ -6,31 +6,41 @@ import { useUI } from '../contexts/UIContext';
 // Función para reproducir sonido de click
 const playClickSound = () => {
   try {
-    // Crear un contexto de audio
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    
-    // Crear un oscilador para generar un tono
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    // Conectar los nodos
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    // Configurar el sonido (tono corto y agudo)
-    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-    oscillator.type = 'sine';
-    
-    // Configurar el volumen (fade in/out)
-    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.01);
-    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.1);
-    
-    // Reproducir el sonido
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.1);
+    const audio = new Audio('/sounds/click.mp3');
+    audio.volume = 0.5; // Volumen moderado para click
+    audio.play().catch(error => {
+      console.log('No se pudo reproducir el sonido de click:', error);
+    });
   } catch (error) {
-    console.log('No se pudo reproducir el sonido:', error);
+    console.log('Error al reproducir sonido de click:', error);
+  }
+};
+
+// Función para reproducir sonidos de archivos WAV en loop
+const playHoverSound = (soundFile: string) => {
+  try {
+    const audio = new Audio(`/sounds/${soundFile}`);
+    audio.volume = 0.3; // Volumen moderado para hover
+    audio.loop = true; // Reproducir en loop
+    audio.play().catch(error => {
+      console.log('No se pudo reproducir el sonido de hover:', error);
+    });
+    return audio; // Devolver la instancia para poder detenerla después
+  } catch (error) {
+    console.log('Error al reproducir sonido de hover:', error);
+    return null;
+  }
+};
+
+// Función para detener sonidos de hover
+const stopHoverSound = (audio: HTMLAudioElement | null) => {
+  if (audio) {
+    try {
+      audio.pause();
+      audio.currentTime = 0; // Reiniciar al inicio
+    } catch (error) {
+      console.log('Error al detener sonido de hover:', error);
+    }
   }
 };
 
@@ -59,6 +69,11 @@ export default function WorkflowShortcuts({
   const { settings } = useCameraSettings();
   const { uiSettings } = useUI();
   const webcamRef = useRef<Webcam>(null);
+  
+  // Referencias para los sonidos de hover
+  const tapSoundRef = useRef<HTMLAudioElement | null>(null);
+  const woowSoundRef = useRef<HTMLAudioElement | null>(null);
+  const corazonSoundRef = useRef<HTMLAudioElement | null>(null);
 
   // Verificar si se puede tomar foto
   const canTakePhoto = imagesCount < maxImages && !isRunning;
@@ -138,6 +153,15 @@ export default function WorkflowShortcuts({
         {/* Botón Tomar Foto */}
         <button
           onClick={handleAutoCapture}
+          onMouseEnter={() => {
+            if (canTakePhoto) {
+              tapSoundRef.current = playHoverSound('tap.wav');
+            }
+          }}
+          onMouseLeave={() => {
+            stopHoverSound(tapSoundRef.current);
+            tapSoundRef.current = null;
+          }}
           disabled={!canTakePhoto}
           className={`px-4 py-6 rounded-lg font-medium transition-all duration-100 flex items-center justify-center space-x-2 hover-fast-blink ${
             !canTakePhoto
@@ -155,6 +179,15 @@ export default function WorkflowShortcuts({
         {/* Botón Procesar y Limpiar */}
         <button
           onClick={handleRunAndClean}
+          onMouseEnter={() => {
+            if (canRunWorkflow) {
+              woowSoundRef.current = playHoverSound('woow.wav');
+            }
+          }}
+          onMouseLeave={() => {
+            stopHoverSound(woowSoundRef.current);
+            woowSoundRef.current = null;
+          }}
           disabled={!canRunWorkflow}
           className={`px-4 py-6 rounded-lg font-medium transition-all duration-100 flex items-center justify-center space-x-2 hover-fast-blink ${
             !canRunWorkflow
@@ -177,6 +210,13 @@ export default function WorkflowShortcuts({
       {/* Segunda línea: Reiniciar */}
       <button
         onClick={handleReset}
+        onMouseEnter={() => {
+          corazonSoundRef.current = playHoverSound('corazon.wav');
+        }}
+        onMouseLeave={() => {
+          stopHoverSound(corazonSoundRef.current);
+          corazonSoundRef.current = null;
+        }}
         className="w-full px-4 py-6 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-all duration-100 flex items-center justify-center space-x-2 hover-fast-blink"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
