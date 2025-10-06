@@ -18,6 +18,11 @@ export interface WorkflowCallbacks {
   onStepComplete?: (stepId: string, result?: any) => void;
   onStepError?: (stepId: string, error: string) => void;
   onProgress?: (currentStep: number, totalSteps: number, message: string) => void;
+  // Nuevos callbacks para actualización progresiva
+  onResponseAgentComplete?: (agentId: string, result: any) => void;
+  onDirectAgentComplete?: (agentId: string, result: any) => void;
+  onCompiledOCRTextUpdate?: (text: string) => void;
+  onQuestionCompilerComplete?: (result: any) => void;
 }
 
 export class MultiOCRWorkflowService {
@@ -57,6 +62,10 @@ export class MultiOCRWorkflowService {
       
       const compiledOCRText = this.compileOCRResults(ocrResults);
       
+      // Actualizar progresivamente el texto compilado
+      console.log('📝 Compilando texto OCR y actualizando progresivamente');
+      callbacks?.onCompiledOCRTextUpdate?.(compiledOCRText);
+      
       callbacks?.onStepComplete?.('ocr-compilation', { compiledText: compiledOCRText });
       
       // Paso 3: Procesar con agente compilador de preguntas
@@ -72,6 +81,10 @@ export class MultiOCRWorkflowService {
         callbacks?.onStepError?.('question-compiler', questionCompilerResult.error);
         throw new Error(`Error en agente compilador: ${questionCompilerResult.error}`);
       }
+      
+      // Actualizar progresivamente el resultado del compilador
+      console.log('🧠 Agente compilador completado, actualizando progresivamente');
+      callbacks?.onQuestionCompilerComplete?.(questionCompilerResult);
       
       callbacks?.onStepComplete?.('question-compiler', questionCompilerResult);
       
@@ -224,14 +237,25 @@ export class MultiOCRWorkflowService {
     const promises = responseAgents.map(async (agent) => {
       try {
         const result = await this.callFlowiseAgent(agent, questionText);
+        
+        // Actualizar progresivamente cuando cada agente termine
+        console.log(`🤖 Agente de respuesta ${agent.id} completado, actualizando progresivamente`);
+        callbacks?.onResponseAgentComplete?.(agent.id, result);
+        
         return { agentId: agent.id, result };
       } catch (error) {
+        const errorResult = {
+          data: null,
+          error: error instanceof Error ? error.message : 'Error desconocido'
+        };
+        
+        // Actualizar progresivamente incluso en caso de error
+        console.log(`❌ Agente de respuesta ${agent.id} falló, actualizando progresivamente`);
+        callbacks?.onResponseAgentComplete?.(agent.id, errorResult);
+        
         return {
           agentId: agent.id,
-          result: {
-            data: null,
-            error: error instanceof Error ? error.message : 'Error desconocido'
-          }
+          result: errorResult
         };
       }
     });
@@ -422,14 +446,25 @@ export class MultiOCRWorkflowService {
     const promises = directAgents.map(async (agent) => {
       try {
         const result = await this.callFlowiseAgentWithUploads(agent, promptContent, uploads);
+        
+        // Actualizar progresivamente cuando cada agente termine
+        console.log(`🚀 Agente directo ${agent.id} completado, actualizando progresivamente`);
+        callbacks?.onDirectAgentComplete?.(agent.id, result);
+        
         return { agentId: agent.id, result };
       } catch (error) {
+        const errorResult = {
+          data: null,
+          error: error instanceof Error ? error.message : 'Error desconocido'
+        };
+        
+        // Actualizar progresivamente incluso en caso de error
+        console.log(`❌ Agente directo ${agent.id} falló, actualizando progresivamente`);
+        callbacks?.onDirectAgentComplete?.(agent.id, errorResult);
+        
         return {
           agentId: agent.id,
-          result: {
-            data: null,
-            error: error instanceof Error ? error.message : 'Error desconocido'
-          }
+          result: errorResult
         };
       }
     });

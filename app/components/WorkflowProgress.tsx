@@ -229,9 +229,17 @@ export default function WorkflowProgress({
       {/* Compiled OCR Text */}
       {compiledOCRText && (
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium mb-4" style={{ color: 'var(--color-text-primary)' }}>
-            Texto OCR Compilado
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium" style={{ color: 'var(--color-text-primary)' }}>
+              Texto OCR Compilado
+            </h3>
+            {isRunning && (
+              <div className="flex items-center space-x-2 text-xs text-green-600 dark:text-green-400">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span>Actualizado progresivamente</span>
+              </div>
+            )}
+          </div>
           <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <pre className="text-sm whitespace-pre-wrap overflow-x-auto" style={{ color: 'var(--color-text-primary)' }}>
               {compiledOCRText}
@@ -243,9 +251,17 @@ export default function WorkflowProgress({
       {/* Question Compiler Result */}
       {questionCompilerResult && (
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium mb-4" style={{ color: 'var(--color-text-primary)' }}>
-            Resultado del Agente Compilador
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium" style={{ color: 'var(--color-text-primary)' }}>
+              Resultado del Agente Compilador
+            </h3>
+            {isRunning && (
+              <div className="flex items-center space-x-2 text-xs text-green-600 dark:text-green-400">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span>Actualizado progresivamente</span>
+              </div>
+            )}
+          </div>
           <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
             <pre className="text-sm whitespace-pre-wrap overflow-x-auto text-blue-800 dark:text-blue-200">
               {MultiOCRWorkflowService.formatAgentResult(questionCompilerResult)}
@@ -342,8 +358,16 @@ export default function WorkflowProgress({
               return (
                 <div key={agentId} className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm font-medium text-purple-800 dark:text-purple-200">
-                      {agentName}
+                    <div className="flex items-center space-x-2">
+                      <div className="text-sm font-medium text-purple-800 dark:text-purple-200">
+                        {agentName}
+                      </div>
+                      {isRunning && (
+                        <div className="flex items-center space-x-1 text-xs text-green-600 dark:text-green-400">
+                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                          <span>Progresivo</span>
+                        </div>
+                      )}
                     </div>
                     {enableTTS && onSpeakAgentResult && (
                       <button
@@ -460,8 +484,16 @@ export default function WorkflowProgress({
               return (
                 <div key={agentId} className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                      {agentName}
+                    <div className="flex items-center space-x-2">
+                      <div className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                        {agentName}
+                      </div>
+                      {isRunning && (
+                        <div className="flex items-center space-x-1 text-xs text-green-600 dark:text-green-400">
+                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                          <span>Progresivo</span>
+                        </div>
+                      )}
                     </div>
                     {enableTTS && onSpeakAgentResult && (
                       <button
@@ -501,6 +533,9 @@ export default function WorkflowProgress({
             <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
               Ejecutando workflow...
             </span>
+          </div>
+          <div className="mt-2 text-xs text-blue-700 dark:text-blue-300">
+            💡 Los resultados se mostrarán progresivamente conforme cada agente termine
           </div>
         </div>
       )}

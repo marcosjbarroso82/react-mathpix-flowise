@@ -191,6 +191,23 @@ export default function MultiOCRWorkflow() {
             endTime: new Date(),
             error 
           });
+        },
+        // Callbacks para actualización progresiva
+        onCompiledOCRTextUpdate: (text: string) => {
+          console.log('🔄 Actualizando texto OCR compilado progresivamente');
+          setCompiledOCRText(text);
+        },
+        onQuestionCompilerComplete: (result: any) => {
+          console.log('✅ Agente compilador completado progresivamente');
+          setQuestionCompilerResult(result);
+        },
+        onResponseAgentComplete: (agentId: string, result: any) => {
+          console.log(`🤖 Agente de respuesta ${agentId} completado progresivamente`);
+          setResponseAgentResult(agentId, result);
+        },
+        onDirectAgentComplete: (agentId: string, result: any) => {
+          console.log(`🚀 Agente directo ${agentId} completado progresivamente`);
+          setDirectAgentResult(agentId, result);
         }
       };
 
@@ -228,27 +245,16 @@ export default function MultiOCRWorkflow() {
       // Esperar a que ambos workflows terminen
       const results = await Promise.all(promises);
 
-      // Procesar resultados del workflow Mathpix OCR
+      // Verificar resultados y mostrar errores si los hay
       const mathpixResult = results[0];
-      if (mathpixResult.success) {
-        setCompiledOCRText(mathpixResult.compiledOCRText);
-        setQuestionCompilerResult(mathpixResult.questionCompilerResult);
-        
-        Object.entries(mathpixResult.responseAgentsResults).forEach(([agentId, agentResult]) => {
-          setResponseAgentResult(agentId, agentResult);
-        });
-      } else {
+      if (!mathpixResult.success) {
         alert(`Error en el workflow Mathpix OCR: ${mathpixResult.error}`);
       }
 
-      // Procesar resultados del workflow Directo a Agentes (si existe)
+      // Verificar resultados del workflow Directo a Agentes (si existe)
       if (results.length > 1) {
         const directResult = results[1];
-        if (directResult.success) {
-          Object.entries(directResult.directAgentsResults).forEach(([agentId, agentResult]) => {
-            setDirectAgentResult(agentId, agentResult);
-          });
-        } else {
+        if (!directResult.success) {
           alert(`Error en el workflow Directo a Agentes: ${directResult.error}`);
         }
       }
