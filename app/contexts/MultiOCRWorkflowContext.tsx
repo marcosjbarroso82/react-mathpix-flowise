@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { supabaseStorageService } from '../services/supabaseStorageService';
 
 export interface MultiOCRWorkflowConfig {
   questionCompilerAgentId: string;
@@ -166,6 +167,21 @@ export function MultiOCRWorkflowProvider({ children }: MultiOCRWorkflowProviderP
     }));
     
     setImages(prev => [...prev, ...newImages]);
+
+    // Subir a Supabase de forma asíncrona (no bloquea la UI)
+    filesToAdd.forEach(file => {
+      supabaseStorageService.uploadPhotoAsync(file)
+        .then(result => {
+          if (result.success) {
+            console.log(`✓ Foto subida a Supabase: ${result.path}`);
+          } else {
+            console.warn(`✗ Error al subir foto a Supabase: ${result.error}`);
+          }
+        })
+        .catch(err => {
+          console.error(`✗ Error al subir foto a Supabase:`, err);
+        });
+    });
   };
 
   const removeImage = (id: string) => {

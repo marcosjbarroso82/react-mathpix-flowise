@@ -115,10 +115,15 @@ export default function WorkflowShortcuts({
         const response = await fetch(imageSrc);
         const blob = await response.blob();
         
+        console.log('WorkflowShortcuts - Blob size:', blob.size, 'bytes');
+        console.log('WorkflowShortcuts - Blob type:', blob.type);
+        
         // Crear File object con el formato y calidad configurados
         const file = new File([blob], `camera-capture-${Date.now()}.${settings.screenshotFormat.split('/')[1]}`, {
           type: settings.screenshotFormat
         });
+
+        console.log('WorkflowShortcuts - File created:', file.name, 'size:', file.size, 'type:', file.type);
 
         // Llamar a la función de procesamiento
         onTakePhoto(file);
@@ -250,7 +255,7 @@ export default function WorkflowShortcuts({
       </div>
 
       {/* Webcam oculta para captura automática */}
-      <div className="hidden">
+      <div style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', zIndex: -1 }}>
         <Webcam
           ref={webcamRef}
           audio={false}

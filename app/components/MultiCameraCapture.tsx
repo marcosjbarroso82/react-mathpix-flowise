@@ -1,6 +1,7 @@
 import React, { useRef, useCallback, useState } from 'react';
 import Webcam from 'react-webcam';
 import { useCameraSettings } from '../contexts/CameraSettingsContext';
+import { supabaseStorageService } from '../services/supabaseStorageService';
 
 interface MultiCameraCaptureProps {
   onImagesCapture: (files: File[]) => void;
@@ -21,6 +22,7 @@ export default function MultiCameraCapture({
   const [error, setError] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [capturedImages, setCapturedImages] = useState<File[]>([]);
+  const [uploadStatus, setUploadStatus] = useState<{ [key: string]: string }>({});
 
   // Usar configuración del contexto global
   const { settings } = useCameraSettings();
@@ -64,6 +66,22 @@ export default function MultiCameraCapture({
         const newCapturedImages = [...capturedImages, file];
         setCapturedImages(newCapturedImages);
 
+        // Subir a Supabase de forma asíncrona (no bloquea la UI)
+        const fileKey = `${file.name}-${Date.now()}`;
+        setUploadStatus(prev => ({ ...prev, [fileKey]: 'Subiendo a Supabase...' }));
+        
+        supabaseStorageService.uploadPhotoAsync(file)
+          .then(result => {
+            if (result.success) {
+              setUploadStatus(prev => ({ ...prev, [fileKey]: `✓ Subida exitosa: ${result.path}` }));
+            } else {
+              setUploadStatus(prev => ({ ...prev, [fileKey]: `✗ Error: ${result.error}` }));
+            }
+          })
+          .catch(err => {
+            setUploadStatus(prev => ({ ...prev, [fileKey]: `✗ Error: ${err.message}` }));
+          });
+
         // Si hemos alcanzado el límite o el usuario quiere procesar, enviar las imágenes
         if (newCapturedImages.length >= availableSlots) {
           onImagesCapture(newCapturedImages);
@@ -87,6 +105,11 @@ export default function MultiCameraCapture({
 
   const clearCapturedImages = useCallback(() => {
     setCapturedImages([]);
+    setUploadStatus({});
+  }, []);
+
+  const clearUploadStatus = useCallback(() => {
+    setUploadStatus({});
   }, []);
 
   const isDisabled = disabled || isProcessing || isCapturing;
@@ -166,6 +189,35 @@ export default function MultiCameraCapture({
         )}
       </div>
 
+      {/* Estado de subidas a Supabase */}
+      {Object.keys(uploadStatus).length > 0 && (
+        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center space-x-2">
+              <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                Estado de subidas a Supabase
+              </span>
+            </div>
+            <button
+              onClick={clearUploadStatus}
+              className="text-xs px-2 py-1 bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 rounded hover:bg-blue-300 dark:hover:bg-blue-700"
+            >
+              Limpiar
+            </button>
+          </div>
+          <div className="space-y-1">
+            {Object.entries(uploadStatus).map(([key, status]) => (
+              <div key={key} className="text-xs text-blue-700 dark:text-blue-300">
+                {status}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Imágenes capturadas pendientes */}
       {capturedImages.length > 0 && (
         <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
@@ -191,6 +243,16 @@ export default function MultiCameraCapture({
           <div>Formato: {settings.screenshotFormat}</div>
           <div>Calidad: {settings.screenshotQuality}</div>
           <div>Delay: {settings.focusDelay}s</div>
+          <div className="flex items-center space-x-1">
+            <span>Supabase:</span>
+            <span className={`px-1 py-0.5 rounded text-xs ${
+              supabaseStorageService.isConfigured() 
+                ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' 
+                : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+            }`}>
+              {supabaseStorageService.isConfigured() ? 'Configurado' : 'No configurado'}
+            </span>
+          </div>
         </div>
       </div>
     </div>
