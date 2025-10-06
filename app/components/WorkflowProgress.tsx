@@ -1,6 +1,7 @@
 import React from 'react';
 import type { ImageItem, WorkflowStep } from '../contexts/MultiOCRWorkflowContext';
 import { MultiOCRWorkflowService } from '../services/multiOCRWorkflowService';
+import { MathpixService } from '../services/mathpixService';
 import { useFlowiseAgents } from '../contexts/FlowiseAgentsContext';
 
 interface WorkflowProgressProps {
@@ -14,6 +15,7 @@ interface WorkflowProgressProps {
   // TTS props
   enableTTS?: boolean;
   onSpeakAgentResult?: (agentId: string, result: any) => void;
+  onSpeakConfidenceInfo?: (ocrResults: any[]) => void;
   onStopTTS?: () => void;
   onPauseTTS?: () => void;
   onResumeTTS?: () => void;
@@ -36,6 +38,7 @@ export default function WorkflowProgress({
   isRunning,
   enableTTS = false,
   onSpeakAgentResult,
+  onSpeakConfidenceInfo,
   onStopTTS,
   onPauseTTS,
   onResumeTTS,
@@ -104,9 +107,29 @@ export default function WorkflowProgress({
       {/* Images Progress */}
       {images.length > 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium mb-4" style={{ color: 'var(--color-text-primary)' }}>
-            Estado de las Imágenes
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium" style={{ color: 'var(--color-text-primary)' }}>
+              Estado de las Imágenes
+            </h3>
+            {/* Botón para leer información de confianza */}
+            {enableTTS && onSpeakConfidenceInfo && (
+              <button
+                onClick={() => {
+                  const ocrResults = images
+                    .filter(img => img.status === 'completed' && img.ocrResult)
+                    .map(img => img.ocrResult);
+                  onSpeakConfidenceInfo(ocrResults);
+                }}
+                className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors duration-200 flex items-center space-x-1"
+                title="Leer información de confianza del OCR"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 4.663 12 5.109 12 6v12c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                </svg>
+                <span>Leer Confianza</span>
+              </button>
+            )}
+          </div>
           <div className="space-y-3">
             {images.map((image, index) => (
               <div key={image.id} className="flex items-center space-x-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--color-surface)' }}>
@@ -126,6 +149,22 @@ export default function WorkflowProgress({
                       <div className="text-green-700 dark:text-green-300 max-h-20 overflow-y-auto">
                         {MultiOCRWorkflowService.formatOCRResult(image.ocrResult)}
                       </div>
+                      {/* Mostrar confianza de manera destacada */}
+                      {image.ocrResult?.data && (() => {
+                        const confidence = MathpixService.extractConfidence(image.ocrResult.data);
+                        if (confidence !== null) {
+                          const confidenceText = MathpixService.formatConfidence(confidence);
+                          const confidenceColor = confidence >= 0.8 ? 'text-green-600 dark:text-green-400' : 
+                                                confidence >= 0.6 ? 'text-yellow-600 dark:text-yellow-400' : 
+                                                'text-red-600 dark:text-red-400';
+                          return (
+                            <div className={`mt-1 font-medium ${confidenceColor}`}>
+                              🎯 Confianza: {confidenceText}
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                   )}
                   {image.status === 'error' && image.ocrResult?.error && (

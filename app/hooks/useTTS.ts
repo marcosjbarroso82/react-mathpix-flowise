@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { ttsManager } from '../services/ttsManager';
 import { MultiOCRWorkflowService } from '../services/multiOCRWorkflowService';
+import { MathpixService } from '../services/mathpixService';
 
 interface UseTTSProps {
   enabled: boolean;
@@ -8,10 +9,12 @@ interface UseTTSProps {
   directAgentsResults?: { [agentId: string]: any };
   agents: Array<{ id: string; name: string }>;
   isRunning?: boolean; // Para detectar cuando inicia un nuevo workflow
+  images?: Array<{ id: string; status: string; ocrResult?: any }>; // Para detectar OCR completado
 }
 
 interface UseTTSReturn {
   speakAgentResult: (agentId: string, agentResult: any) => void;
+  speakConfidenceInfo: (ocrResults: any[]) => void;
   stopTTS: () => void;
   pauseTTS: () => void;
   resumeTTS: () => void;
@@ -25,12 +28,33 @@ interface UseTTSReturn {
 }
 
 /**
+ * Función helper para crear texto TTS que incluya información de confianza
+ */
+function createTTSTextWithConfidence(responseText: string, agentResult: any): string {
+  // Buscar información de confianza en el resultado del agente
+  let confidenceInfo = '';
+  
+  // Si el resultado contiene información de OCR con confianza
+  if (agentResult?.data && typeof agentResult.data === 'string') {
+    // Buscar patrones de confianza en el texto compilado
+    const confidenceMatch = agentResult.data.match(/Confianza: (\d+%)/g);
+    if (confidenceMatch && confidenceMatch.length > 0) {
+      const confidences = confidenceMatch.map(match => match.replace('Confianza: ', ''));
+      confidenceInfo = ` Confianza promedio del OCR: ${confidences.join(', ')}.`;
+    }
+  }
+  
+  return responseText + confidenceInfo;
+}
+
+/**
  * Hook para manejar Text-to-Speech en el Multi-OCR Workflow
  * Se encarga de leer automáticamente las respuestas de los agentes cuando terminan
  */
-export function useTTS({ enabled, responseAgentsResults, directAgentsResults = {}, agents, isRunning = false }: UseTTSProps): UseTTSReturn {
+export function useTTS({ enabled, responseAgentsResults, directAgentsResults = {}, agents, isRunning = false, images = [] }: UseTTSProps): UseTTSReturn {
   const previousResultsRef = useRef<{ [agentId: string]: any }>({});
   const processedAgentsRef = useRef<Set<string>>(new Set());
+  const processedImagesRef = useRef<Set<string>>(new Set());
 
   // Configurar el estado del TTS cuando cambia la configuración
   useEffect(() => {
@@ -42,11 +66,70 @@ export function useTTS({ enabled, responseAgentsResults, directAgentsResults = {
     if (isRunning) {
       // Limpiar estados de agentes procesados y resultados anteriores
       processedAgentsRef.current.clear();
+      processedImagesRef.current.clear();
       previousResultsRef.current = {};
       ttsManager.reset();
       console.log('TTS: Estados reseteados para nuevo workflow');
     }
   }, [isRunning]);
+
+  // Detectar automáticamente cuando hay imágenes con OCR completado y leer confianza
+  useEffect(() => {
+    if (!enabled) return;
+
+    // Buscar imágenes que han completado OCR pero no han sido procesadas para TTS
+    const completedImages = images.filter(img => 
+      img.status === 'completed' && 
+      img.ocrResult && 
+      !processedImagesRef.current.has(img.id)
+    );
+
+    if (completedImages.length > 0) {
+      console.log(`TTS: Detectadas ${completedImages.length} imágenes con OCR completado`);
+      
+      // Crear texto TTS para la información de confianza
+      const ocrResults = completedImages.map(img => img.ocrResult);
+      let confidenceText = '';
+      const confidences: string[] = [];
+
+      ocrResults.forEach((ocrResult, index) => {
+        if (ocrResult?.data) {
+          const confidence = MathpixService.extractConfidence(ocrResult.data);
+          if (confidence !== null) {
+            const confidenceFormatted = MathpixService.formatConfidence(confidence);
+            confidences.push(`Imagen ${index + 1}: ${confidenceFormatted}`);
+          }
+        }
+      });
+
+      if (confidences.length > 0) {
+        if (confidences.length === 1) {
+          confidenceText = `Confianza OCR:: ${confidences[0]}.`;
+        } else {
+          confidenceText = `${confidences.length} imágenes. Confianza OCR: ${confidences.join(', ')}.`;
+        }
+        
+        ttsManager.addToQueue({
+          text: confidenceText,
+          agentName: 'Sistema',
+          onStart: () => console.log('TTS: Iniciando lectura automática de información de confianza'),
+          onEnd: () => {
+            console.log('TTS: Completada lectura automática de información de confianza');
+            // Marcar las imágenes como procesadas
+            completedImages.forEach(img => processedImagesRef.current.add(img.id));
+          },
+          onError: (error) => {
+            console.error('TTS: Error leyendo información de confianza automáticamente:', error);
+            // Marcar las imágenes como procesadas incluso si hay error
+            completedImages.forEach(img => processedImagesRef.current.add(img.id));
+          }
+        });
+      } else {
+        // Si no hay confianza disponible, marcar como procesadas de todas formas
+        completedImages.forEach(img => processedImagesRef.current.add(img.id));
+      }
+    }
+  }, [images, enabled]);
 
   // Detectar cuando un agente termina de procesar y agregar a la cola TTS
   useEffect(() => {
@@ -77,8 +160,11 @@ export function useTTS({ enabled, responseAgentsResults, directAgentsResults = {
         if (responseText && responseText !== 'Sin resultado') {
           console.log(`TTS: Agregando resultado de ${agentName} a la cola`);
           
+          // Crear texto TTS que incluya información de confianza si está disponible
+          const ttsText = createTTSTextWithConfidence(responseText, agentResult);
+          
           ttsManager.addToQueue({
-            text: responseText,
+            text: ttsText,
             agentName,
             onStart: () => {
               console.log(`TTS: Iniciando lectura de ${agentName}`);
@@ -104,6 +190,7 @@ export function useTTS({ enabled, responseAgentsResults, directAgentsResults = {
   useEffect(() => {
     if (!enabled) {
       processedAgentsRef.current.clear();
+      processedImagesRef.current.clear();
       previousResultsRef.current = {};
       ttsManager.reset();
     }
@@ -114,6 +201,7 @@ export function useTTS({ enabled, responseAgentsResults, directAgentsResults = {
     // Si no hay resultados de agentes, resetear estados
     if (Object.keys(responseAgentsResults).length === 0 && Object.keys(directAgentsResults).length === 0) {
       processedAgentsRef.current.clear();
+      processedImagesRef.current.clear();
       previousResultsRef.current = {};
     }
   }, [responseAgentsResults, directAgentsResults]);
@@ -127,8 +215,11 @@ export function useTTS({ enabled, responseAgentsResults, directAgentsResults = {
     const responseText = MultiOCRWorkflowService.formatAgentResult(agentResult);
     
     if (responseText && responseText !== 'Sin resultado') {
+      // Crear texto TTS que incluya información de confianza si está disponible
+      const ttsText = createTTSTextWithConfidence(responseText, agentResult);
+      
       ttsManager.addToQueue({
-        text: responseText,
+        text: ttsText,
         agentName,
         onStart: () => console.log(`TTS: Lectura manual iniciada - ${agentName}`),
         onEnd: () => console.log(`TTS: Lectura manual completada - ${agentName}`),
@@ -137,10 +228,41 @@ export function useTTS({ enabled, responseAgentsResults, directAgentsResults = {
     }
   }, [enabled, agents]);
 
+  // Función para leer información de confianza de OCR
+  const speakConfidenceInfo = useCallback((ocrResults: any[]) => {
+    if (!enabled) return;
+
+    let confidenceText = 'Información de confianza del OCR: ';
+    const confidences: string[] = [];
+
+    ocrResults.forEach((ocrResult, index) => {
+      if (ocrResult?.data) {
+        const confidence = MathpixService.extractConfidence(ocrResult.data);
+        if (confidence !== null) {
+          const confidenceFormatted = MathpixService.formatConfidence(confidence);
+          confidences.push(`Imagen ${index + 1}: ${confidenceFormatted}`);
+        }
+      }
+    });
+
+    if (confidences.length > 0) {
+      confidenceText += confidences.join(', ') + '.';
+      
+      ttsManager.addToQueue({
+        text: confidenceText,
+        agentName: 'Sistema',
+        onStart: () => console.log('TTS: Iniciando lectura de información de confianza'),
+        onEnd: () => console.log('TTS: Completada lectura de información de confianza'),
+        onError: (error) => console.error('TTS: Error leyendo información de confianza:', error)
+      });
+    }
+  }, [enabled]);
+
   // Función para detener TTS
   const stopTTS = useCallback(() => {
     ttsManager.stop();
     processedAgentsRef.current.clear();
+    processedImagesRef.current.clear();
   }, []);
 
   // Función para pausar TTS
@@ -165,6 +287,7 @@ export function useTTS({ enabled, responseAgentsResults, directAgentsResults = {
 
   return {
     speakAgentResult,
+    speakConfidenceInfo,
     stopTTS,
     pauseTTS,
     resumeTTS,

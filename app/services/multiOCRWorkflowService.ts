@@ -168,7 +168,11 @@ export class MultiOCRWorkflowService {
           }
         }
         
-        compiledText += `OCR #${ocrNumber} ${textContent} FIN OCR #${ocrNumber}\n\n`;
+        // Extraer confianza del resultado OCR
+        const confidence = MathpixService.extractConfidence(ocrResult.result.data);
+        const confidenceText = confidence !== null ? ` (Confianza: ${MathpixService.formatConfidence(confidence)})` : '';
+        
+        compiledText += `OCR #${ocrNumber} ${textContent}${confidenceText} FIN OCR #${ocrNumber}\n\n`;
       }
     });
     
@@ -246,19 +250,26 @@ export class MultiOCRWorkflowService {
   static formatOCRResult(ocrResult: any): string {
     if (!ocrResult || !ocrResult.data) return 'Sin resultado';
     
+    let textContent = '';
+    
     if (typeof ocrResult.data === 'string') {
-      return ocrResult.data;
+      textContent = ocrResult.data;
+    } else if (ocrResult.data.text) {
+      textContent = ocrResult.data.text;
+    } else if (ocrResult.data.latex) {
+      textContent = ocrResult.data.latex;
+    } else {
+      textContent = JSON.stringify(ocrResult.data, null, 2);
     }
     
-    if (ocrResult.data.text) {
-      return ocrResult.data.text;
+    // Agregar información de confianza si está disponible
+    const confidence = MathpixService.extractConfidence(ocrResult.data);
+    if (confidence !== null) {
+      const confidenceText = MathpixService.formatConfidence(confidence);
+      textContent += `\n\nConfianza: ${confidenceText}`;
     }
     
-    if (ocrResult.data.latex) {
-      return ocrResult.data.latex;
-    }
-    
-    return JSON.stringify(ocrResult.data, null, 2);
+    return textContent;
   }
 
   static formatAgentResult(agentResult: any): string {

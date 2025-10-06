@@ -160,4 +160,22 @@ export class MathpixService {
     
     return String(data);
   }
+
+  static extractConfidence(data: any): number | null {
+    if (typeof data === 'object' && data !== null && 'confidence' in data) {
+      const confidence = data.confidence;
+      if (typeof confidence === 'number' && confidence >= 0 && confidence <= 1) {
+        return confidence;
+      }
+    }
+    return null;
+  }
+
+  static formatConfidence(confidence: number | null): string {
+    if (confidence === null) {
+      return 'Confianza no disponible';
+    }
+    const percentage = Math.round(confidence * 100);
+    return `${percentage}%`;
+  }
 }

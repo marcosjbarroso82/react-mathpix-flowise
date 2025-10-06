@@ -58,6 +58,7 @@ export default function MultiOCRWorkflow() {
   // TTS Hook
   const {
     speakAgentResult,
+    speakConfidenceInfo,
     stopTTS,
     pauseTTS,
     resumeTTS,
@@ -68,7 +69,8 @@ export default function MultiOCRWorkflow() {
     responseAgentsResults,
     directAgentsResults,
     agents,
-    isRunning
+    isRunning,
+    images
   });
 
   const [hasConfigurationErrors, setHasConfigurationErrors] = useState(false);
@@ -596,6 +598,7 @@ export default function MultiOCRWorkflow() {
           isRunning={isRunning}
           enableTTS={config.enableTTS}
           onSpeakAgentResult={speakAgentResult}
+          onSpeakConfidenceInfo={speakConfidenceInfo}
           onStopTTS={stopTTS}
           onPauseTTS={pauseTTS}
           onResumeTTS={resumeTTS}
