@@ -8,5 +8,6 @@ export default [
   route("gallery", "routes/gallery.tsx"),
   route("multi-ocr-workflow", "routes/multi-ocr-workflow.tsx"),
   route("settings", "routes/settings.tsx"),
+  route("supabase-test", "routes/supabase-test.tsx"),
   route("about", "routes/about.tsx"),
 ] satisfies RouteConfig;

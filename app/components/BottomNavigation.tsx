@@ -58,6 +58,17 @@ const navigationItems = [
       </svg>
     ),
   },
+  {
+    name: "Supabase",
+    href: "/supabase-test",
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7l9 5 9-5-9-5-9 5z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 17l9 5 9-5" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l9 5 9-5" />
+      </svg>
+    ),
+  },
 ];
 
 export function BottomNavigation() {
