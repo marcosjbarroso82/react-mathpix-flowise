@@ -176,7 +176,7 @@ export default function WorkflowShortcuts({
           onClick={handleAutoCapture}
           onMouseEnter={() => {
             if (canTakePhoto) {
-              tapSoundRef.current = playHoverSound('tap.wav');
+              tapSoundRef.current = playHoverSound('Foto.mp3');
             }
           }}
           onMouseLeave={() => {
@@ -202,7 +202,7 @@ export default function WorkflowShortcuts({
           onClick={handleRunAndClean}
           onMouseEnter={() => {
             if (canRunWorkflow) {
-              woowSoundRef.current = playHoverSound('woow.wav');
+              woowSoundRef.current = playHoverSound('Procesar.mp3');
             }
           }}
           onMouseLeave={() => {
@@ -232,7 +232,7 @@ export default function WorkflowShortcuts({
       <button
         onClick={handleReset}
         onMouseEnter={() => {
-          corazonSoundRef.current = playHoverSound('corazon.wav');
+          corazonSoundRef.current = playHoverSound('reiniciar.mp3');
         }}
         onMouseLeave={() => {
           stopHoverSound(corazonSoundRef.current);
