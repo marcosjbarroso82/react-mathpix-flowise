@@ -2,6 +2,7 @@ import React, { useRef, useCallback, useState } from 'react';
 import Webcam from 'react-webcam';
 import { useCameraSettings } from '../contexts/CameraSettingsContext';
 import { supabaseStorageService } from '../services/supabaseStorageService';
+import { useUI } from '../contexts/UIContext';
 
 interface MultiCameraCaptureProps {
   onImagesCapture: (files: File[]) => void;
@@ -26,6 +27,7 @@ export default function MultiCameraCapture({
 
   // Usar configuración del contexto global
   const { settings } = useCameraSettings();
+  const { uiSettings } = useUI();
 
   // Configuración de video constraints para react-webcam
   const videoConstraints = {
@@ -116,14 +118,16 @@ export default function MultiCameraCapture({
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+			{!uiSettings.compactMode && (
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-medium" style={{ color: 'var(--color-text-primary)' }}>
-          Capturar con Cámara
-        </h2>
+				<h2 className="text-lg font-medium" style={{ color: 'var(--color-text-primary)' }}>
+					Capturar con Cámara
+				</h2>
         <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
           {currentFileCount + capturedImages.length}/{maxFiles} imágenes
         </div>
       </div>
+			)}
       
       {error && (
         <div className="mb-4 p-3 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-200 rounded-md">

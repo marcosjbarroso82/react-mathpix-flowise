@@ -325,6 +325,15 @@ export default function MultiOCRWorkflow() {
           onReset={handleReset}
         />
 
+        {/* Camera Capture Section */}
+        <MultiCameraCapture
+          onImagesCapture={addImages}
+          maxFiles={config.maxImages}
+          currentFileCount={images.length}
+          isProcessing={isRunning}
+          disabled={isRunning}
+        />
+
         {/* Results Summary Section */}
         <ResultsSummary 
           responseAgentsResults={responseAgentsResults} 
@@ -510,14 +519,6 @@ export default function MultiOCRWorkflow() {
           disabled={isRunning}
         />
 
-        {/* Camera Capture Section */}
-        <MultiCameraCapture
-          onImagesCapture={addImages}
-          maxFiles={config.maxImages}
-          currentFileCount={images.length}
-          isProcessing={isRunning}
-          disabled={isRunning}
-        />
 
         {/* Images Management */}
         {images.length > 0 && (
