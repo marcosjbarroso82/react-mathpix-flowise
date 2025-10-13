@@ -162,7 +162,7 @@ export default function WorkflowShortcuts({
           }
         `}
       </style>
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
         {!uiSettings.compactMode && (
           <h2 className="text-lg font-medium mb-4" style={{ color: 'var(--color-text-primary)' }}>
             ⚡ Atajos de Ejecución

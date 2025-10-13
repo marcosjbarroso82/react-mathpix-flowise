@@ -313,7 +313,7 @@ export default function MultiOCRWorkflow() {
       />
 
       {/* Main Content */}
-      <div className="p-4 space-y-6">
+      <div className="">
         {/* Shortcuts Section */}
         <WorkflowShortcuts
           imagesCount={images.length}
