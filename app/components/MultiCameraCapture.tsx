@@ -117,7 +117,7 @@ export default function MultiCameraCapture({
   const isDisabled = disabled || isProcessing || isCapturing;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
 			{!uiSettings.compactMode && (
       <div className="flex items-center justify-between mb-4">
 				<h2 className="text-lg font-medium" style={{ color: 'var(--color-text-primary)' }}>
