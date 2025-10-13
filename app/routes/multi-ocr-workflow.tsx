@@ -13,6 +13,7 @@ import WorkflowProgress from '../components/WorkflowProgress';
 import WorkflowShortcuts from '../components/WorkflowShortcuts';
 import ResultsSummary from '../components/ResultsSummary';
 import { PageHeader } from '../components/PageHeader';
+import { useUI } from '../contexts/UIContext';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -53,6 +54,7 @@ export default function MultiOCRWorkflow() {
 
   const { agents } = useFlowiseAgents();
   const { settings: mathpixSettings } = useMathpixSettings();
+  const { uiSettings } = useUI();
   const { prompts } = usePrompts();
 
   // TTS Hook
@@ -328,23 +330,26 @@ export default function MultiOCRWorkflow() {
         
         {/* Images Management */}
         {images.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            {!uiSettings.compactMode && (
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-medium" style={{ color: 'var(--color-text-primary)' }}>
                 Imágenes Seleccionadas ({images.length})
               </h3>
               <button
-                onClick={clearImages}
-                disabled={isRunning}
-                className="px-3 py-1 text-sm bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-md transition-colors duration-200"
+              onClick={clearImages}
+              disabled={isRunning}
+              className="px-3 py-1 text-sm bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-md transition-colors duration-200"
               >
                 Limpiar Todo
               </button>
             </div>
+              )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {images.map((image, index) => (
                 <div key={image.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-3">
+                  			{!uiSettings.compactMode && (
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
                       #{index + 1}
@@ -359,7 +364,7 @@ export default function MultiOCRWorkflow() {
                       </svg>
                     </button>
                   </div>
-                  
+                  )}
                   {/* Imagen */}
                   <div className="mb-3">
                     <img

@@ -97,16 +97,16 @@ export function useTTS({ enabled, responseAgentsResults, directAgentsResults = {
           const confidence = MathpixService.extractConfidence(ocrResult.data);
           if (confidence !== null) {
             const confidenceFormatted = MathpixService.formatConfidence(confidence);
-            confidences.push(`Imagen ${index + 1}: ${confidenceFormatted}`);
+            confidences.push(`${confidenceFormatted}`);
           }
         }
       });
 
       if (confidences.length > 0) {
         if (confidences.length === 1) {
-          confidenceText = `Confianza OCR:: ${confidences[0]}.`;
+          confidenceText = `Confianza:: ${confidences[0]}.`;
         } else {
-          confidenceText = `${confidences.length} imágenes. Confianza OCR: ${confidences.join(', ')}.`;
+          confidenceText = `Confianza: ${confidences.join(', ')}.`;
         }
         
         ttsManager.addToQueue({
