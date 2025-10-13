@@ -365,7 +365,7 @@ export default function MultiOCRWorkflow() {
                     <img
                       src={URL.createObjectURL(image.file)}
                       alt={`Imagen ${index + 1}`}
-                      className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                      className="w-full max-h-64 object-contain rounded-lg border border-gray-200 dark:border-gray-600"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
