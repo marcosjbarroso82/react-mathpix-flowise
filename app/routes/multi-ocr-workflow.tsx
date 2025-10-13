@@ -325,6 +325,67 @@ export default function MultiOCRWorkflow() {
           onReset={handleReset}
         />
 
+        
+        {/* Images Management */}
+        {images.length > 0 && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                Imágenes Seleccionadas ({images.length})
+              </h3>
+              <button
+                onClick={clearImages}
+                disabled={isRunning}
+                className="px-3 py-1 text-sm bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-md transition-colors duration-200"
+              >
+                Limpiar Todo
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {images.map((image, index) => (
+                <div key={image.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                      #{index + 1}
+                    </span>
+                    <button
+                      onClick={() => removeImage(image.id)}
+                      disabled={isRunning}
+                      className="text-red-600 hover:text-red-700 disabled:text-gray-400"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  {/* Imagen */}
+                  <div className="mb-3">
+                    <img
+                      src={URL.createObjectURL(image.file)}
+                      alt={`Imagen ${index + 1}`}
+                      className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Información del archivo */}
+                  <div className="text-xs text-gray-600 dark:text-gray-400 truncate mb-1">
+                    {image.name}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {(image.size / 1024 / 1024).toFixed(2)} MB
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Camera Capture Section */}
         <MultiCameraCapture
           onImagesCapture={addImages}
@@ -517,53 +578,11 @@ export default function MultiOCRWorkflow() {
           currentFileCount={images.length}
           isProcessing={isRunning}
           disabled={isRunning}
+          selectedFiles={images.map(img => img.file)}
+          onRemoveFile={(index) => removeImage(images[index].id)}
         />
 
 
-        {/* Images Management */}
-        {images.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                Imágenes Seleccionadas ({images.length})
-              </h3>
-              <button
-                onClick={clearImages}
-                disabled={isRunning}
-                className="px-3 py-1 text-sm bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-md transition-colors duration-200"
-              >
-                Limpiar Todo
-              </button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {images.map((image, index) => (
-                <div key={image.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                      #{index + 1}
-                    </span>
-                    <button
-                      onClick={() => removeImage(image.id)}
-                      disabled={isRunning}
-                      className="text-red-600 hover:text-red-700 disabled:text-gray-400"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400 truncate mb-1">
-                    {image.name}
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {(image.size / 1024 / 1024).toFixed(2)} MB
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Action Buttons */}
         <div className="flex space-x-4">
