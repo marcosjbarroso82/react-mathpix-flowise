@@ -185,7 +185,7 @@ export class MultiOCRWorkflowService {
         const confidence = MathpixService.extractConfidence(ocrResult.result.data);
         const confidenceText = confidence !== null ? ` (Confianza: ${MathpixService.formatConfidence(confidence)})` : '';
         
-        compiledText += `OCR #${ocrNumber} ${textContent}${confidenceText} FIN OCR #${ocrNumber}\n\n`;
+        compiledText += `OCR #${ocrNumber} ${textContent} FIN OCR #${ocrNumber}\n\n`;
       }
     });
     
